@@ -705,6 +705,7 @@ def initChart():
 	m_layout = findViewByName("divLayout", m_paint.m_views)
 	m_myLayout =  findViewByName("mylayout", m_paint.m_views)
 	m_myLayout.m_showVScrollBar = TRUE
+	m_myLayout.m_borderColor = "none"
 	m_chart.m_leftVScaleWidth = 80
 	m_chart.m_textColor = "rgb(255,255,255)"
 	m_chart.m_mainIndicator = "MA"
@@ -813,14 +814,15 @@ def initChart():
 			indButton.m_type = "button"
 			indButton.m_text = f
 			indButton.m_name = "formula"
+			indButton.m_size = FCSize(100, 40)
 			addViewToParent(indButton, m_myLayout)
 			if(indButton.m_paint.m_defaultUIStyle == "dark"):
 				indButton.m_backColor = "rgb(0,0,0)"
-				indButton.m_borderColor = "rgb(100,100,100)"
+				indButton.m_borderColor = "none"
 				indButton.m_textColor = "rgb(255,255,255)"
 			elif(indButton.m_paint.m_defaultUIStyle == "light"):
 				indButton.m_backColor = "rgb(255,255,255)"
-				indButton.m_borderColor = "rgb(150,150,150)"
+				indButton.m_borderColor = "none"
 				indButton.m_textColor = "rgb(0,0,0)"			
 	resetLayoutDiv(m_myLayout)
 	bindFormula("指数平滑异同平均线(MACD).js")
