@@ -550,12 +550,13 @@ def bindFormula(name):
 					bar1.m_color2 =  colorStrs[1]
 					bar1.m_divIndex = 2
 					bar1.m_type = "bar"
-					bar1.m_name = subStrs[1]
-					bar1.m_title = subStrs[1]
+					bar1.m_name = subStrs[1]					
 					if(is2Color):
 						bar1.m_style = "2color"
+						bar1.m_title = subStrs[1]
 					else:
-						bar1.m_title2 = subStrs[2]
+						s = s + 1
+						bar1.m_showHideDatas = shapesArray[s].split(",")
 					m_chart.m_shapes.append(bar1)
 					resultStrs = result.split("\r\n")
 					colIndex = 0
