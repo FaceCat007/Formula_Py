@@ -519,11 +519,11 @@ def onViewClick(view, mp, buttons, clicks, delta):
 		calcChartIndicator(m_chart)
 		invalidateView(m_chart, m_chart.m_paint)
 	elif(view.m_name == "formula"):
-		bindFormula(view.m_text)
+		bindFormula(view.m_text, TRUE, 2)
 		
 
 #绑定公式
-def bindFormula(name):
+def bindFormula(name, clearOld, divIndex):
 	global m_shapes
 	global m_currentFormula
 	file0 = open(os.getcwd() + "\\" + name, encoding="UTF-8")
@@ -533,7 +533,8 @@ def bindFormula(name):
 	#计算指标
 	m_chart = findViewByName("chart", m_paint.m_views)
 	result = calculateFormulaWithShapes(formulaStr, m_chart.m_data)
-	m_chart.m_shapes = []
+	if(clearOld):
+		m_chart.m_shapes = []
 	shapesArray = m_shapes.split("\r\n")
 	for s in range(0, len(shapesArray)):
 		subStrs = shapesArray[s].split(",")
@@ -548,7 +549,7 @@ def bindFormula(name):
 					colorStrs = shapesArray[s].split("|")
 					bar1.m_color = colorStrs[0]
 					bar1.m_color2 =  colorStrs[1]
-					bar1.m_divIndex = 2
+					bar1.m_divIndex = divIndex
 					bar1.m_type = "bar"
 					bar1.m_name = subStrs[1]					
 					if(is2Color):
@@ -588,7 +589,7 @@ def bindFormula(name):
 				line1 = BaseShape()
 				s = s + 1
 				line1.m_color = shapesArray[s]
-				line1.m_divIndex = 2
+				line1.m_divIndex = divIndex
 				line1.m_name = subStrs[1]
 				line1.m_title = subStrs[1]
 				m_chart.m_shapes.append(line1)
@@ -616,7 +617,7 @@ def bindFormula(name):
 				textShape.m_text = shapesArray[s]
 				s = s + 1
 				textShape.m_color = shapesArray[s]
-				textShape.m_divIndex = 2
+				textShape.m_divIndex = divIndex
 				textShape.m_type = "text"
 				textShape.m_name = subStrs[1]
 				textShape.m_title = subStrs[1]
@@ -826,7 +827,13 @@ def initChart():
 				indButton.m_borderColor = "none"
 				indButton.m_textColor = "rgb(0,0,0)"			
 	resetLayoutDiv(m_myLayout)
-	bindFormula("指数平滑异同平均线(MACD).js")
+	bindFormula("指数平滑异同平均线(MACD).js", TRUE, 2)
+	#m_chart.m_candleDivPercent = 0.45
+	#m_chart.m_volDivPercent = 0.15
+	#m_chart.m_indDivPercent = 0.2
+	#m_chart.m_indDivPercent2 = 0.2
+	#bindFormula("通达信火车轨(TDXHCG).js", FALSE, 2)
+	#bindFormula("通达信明白K线(TDXMBKX).js", FALSE, 3)
 
 m_xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<html xmlns=\"facecat\">\r\n  <head>\r\n  </head>\r\n  <body>\r\n    <div type=\"splitlayout\" layoutstyle=\"lefttoright\" bordercolor=\"none\" dock=\"fill\" size=\"400,400\" candragsplitter=\"true\" splitmode=\"AbsoluteSize\" splittervisible=\"true\" splitter-bordercolor=\"-200000000105\" splitterposition=\"250,5\">\r\n      <div type=\"layout\" name=\"mylayout\" layoutstyle=\"TopToBottom\">\r\n      </div>\r\n      <div type=\"splitlayout\" layoutstyle=\"bottomtotop\" bordercolor=\"none\" splitterposition=\"340,1\" dock=\"fill\" size=\"400,400\" candragsplitter=\"true\">\r\n        <div name=\"divLayout\" bordercolor=\"none\" />\r\n        <chart name=\"chart\" bordercolor=\"none\" />\r\n      </div>\r\n    </div>\r\n  </body>\r\n</html>"
 
