@@ -792,11 +792,9 @@ def initChart():
 	file0.close()
 	strs = dataText.split("\n")
 	strLen = len(strs)
-	pos = strLen - 2
 	for i in range(2, strLen - 1):
-		subStrs = strs[pos].split(",")
+		subStrs = strs[i].split(",")
 		if(len(subStrs) > 5):
-			
 			data = SecurityData()
 			data.m_date = i
 			data.m_close = float(subStrs[4])
@@ -805,7 +803,6 @@ def initChart():
 			data.m_open = float(subStrs[1])
 			data.m_volume = float(subStrs[6])
 			m_chart.m_data.append(data)
-		pos = pos - 1
 	#testDiv4()
 	calcChartIndicator(m_chart)
 	files = os.listdir("./")
