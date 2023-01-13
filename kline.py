@@ -787,28 +787,25 @@ def initChart():
 			subView.m_backColor = "rgb(255,255,255)"
 			subView.m_borderColor = "rgb(150,150,150)"
 			subView.m_textColor = "rgb(0,0,0)"
-	try:
-		s = requests.Session()
-		s.mount('http://', HTTPAdapter(max_retries=3))
-		response = s.get('http://quotes.money.163.com/service/chddata.html?code=0000001', timeout=5)
-		text = response.text
-		strs = text.split("\r\n")
-		strLen = len(strs)
-		pos = strLen - 2
-		for i in range(0, strLen - 3):
-			subStrs = strs[pos].split(",")
-			if(len(subStrs) > 8):
-				data = SecurityData()
-				data.m_date = i
-				data.m_close = float(subStrs[3])
-				data.m_high = float(subStrs[4])
-				data.m_low = float(subStrs[5])
-				data.m_open = float(subStrs[6])
-				data.m_volume = float(subStrs[11])
-				m_chart.m_data.append(data)
-			pos = pos - 1
-	except requests.exceptions.RequestException as e:
-		print(e)
+	file0 = open(os.getcwd() + "\\SH600000.txt", encoding="UTF-8")
+	dataText = file0.read()
+	file0.close()
+	strs = dataText.split("\n")
+	strLen = len(strs)
+	pos = strLen - 2
+	for i in range(2, strLen - 1):
+		subStrs = strs[pos].split(",")
+		if(len(subStrs) > 5):
+			
+			data = SecurityData()
+			data.m_date = i
+			data.m_close = float(subStrs[4])
+			data.m_high = float(subStrs[2])
+			data.m_low = float(subStrs[3])
+			data.m_open = float(subStrs[1])
+			data.m_volume = float(subStrs[6])
+			m_chart.m_data.append(data)
+		pos = pos - 1
 	#testDiv4()
 	calcChartIndicator(m_chart)
 	files = os.listdir("./")

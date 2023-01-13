@@ -948,6 +948,7 @@ def getIntersectRect(lpDestRect, lpSrc1Rect, lpSrc2Rect):
 #views:视图集合
 def findView(mp, views):
 	size = len(views)
+	#先判断置顶视图
 	for i in range(0, size):
 		view = views[size - i - 1]
 		if(view.m_visible and view.m_topMost):
@@ -966,6 +967,7 @@ def findView(mp, views):
 					if(subView != None):
 						return subView
 				return view
+	#再判断非置顶视图
 	for i in range(0, size):
 		view = views[size - i - 1]
 		if(view.m_visible and view.m_topMost == FALSE):
@@ -997,6 +999,7 @@ def drawCheckBox(checkBox, paint, clipRect):
 		eRight = checkBox.m_buttonSize.cx + 10
 		eRect = FCRect(1, (height - checkBox.m_buttonSize.cy) / 2, checkBox.m_buttonSize.cx + 1, (height + checkBox.m_buttonSize.cy) / 2)
 		paint.drawRect(checkBox.m_textColor, 1, 0, eRect.left, eRect.top, eRect.right, eRect.bottom)
+		#绘制选中区域
 		if(checkBox.m_checked):
 			eRect.left += 2
 			eRect.top += 2
@@ -1017,6 +1020,7 @@ def drawRadioButton(radioButton, paint, clipRect):
 		eRight = radioButton.m_buttonSize.cx + 10
 		eRect = FCRect(1, (height - radioButton.m_buttonSize.cy) / 2, radioButton.m_buttonSize.cx + 1, (height + radioButton.m_buttonSize.cy) / 2)
 		paint.drawEllipse(radioButton.m_textColor, 1, 0, eRect.left, eRect.top, eRect.right, eRect.bottom)
+		#绘制选中区域
 		if(radioButton.m_checked):
 			eRect.left += 2
 			eRect.top += 2
@@ -1039,6 +1043,7 @@ def clickCheckBox(checkBox, mp):
 def clickRadioButton(radioButton, mp):
 	hasOther = FALSE
 	if(radioButton.m_parent != None and len(radioButton.m_parent.m_views) > 0):
+		#将相同groupName的单选按钮都取消选中
 		for i in range(0, len(radioButton.m_parent.m_views)):
 			rView = radioButton.m_parent.m_views[i]
 			if(rView.m_type == "radiobutton"):
@@ -1051,23 +1056,28 @@ def clickRadioButton(radioButton, mp):
 #paint:绘图对象 
 #clipRect:裁剪区域
 def drawButton(button, paint, clipRect):
+	#鼠标按下
 	if(button == m_mouseDownView):
 		if(button.m_pushedColor != "none"):
 			paint.fillRect(button.m_pushedColor, 0, 0, button.m_size.cx, button.m_size.cy)
 		else:
 			if(button.m_backColor != "none"):
 				paint.fillRect(button.m_backColor, 0, 0, button.m_size.cx, button.m_size.cy)
+	#鼠标悬停
 	elif(button == m_mouseMoveView):
 		if(button.m_hoveredColor != "none"):
 			paint.fillRect(button.m_hoveredColor, 0, 0, button.m_size.cx, button.m_size.cy)
 		else:
 			if(button.m_backColor != "none"):
 				paint.fillRect(button.m_backColor, 0, 0, button.m_size.cx, button.m_size.cy)
+	#常规情况
 	elif(button.m_backColor != "none"):
 		paint.fillRect(button.m_backColor, 0, 0, button.m_size.cx, button.m_size.cy)
+	#绘制文字
 	if(button.m_textColor != "none" and len(button.m_text) > 0):
 		tSize = paint.textSize(button.m_text, button.m_font)
 		paint.drawText(button.m_text, button.m_textColor, button.m_font, (button.m_size.cx - tSize.cx) / 2, (button.m_size.cy  - tSize.cy) / 2)
+	#绘制边线
 	if(button.m_borderColor != "none"):
 		paint.drawRect(button.m_borderColor, 1, 0, 0, 0, button.m_size.cx - 1, button.m_size.cy - 1)
 
@@ -1098,6 +1108,7 @@ def getDivContentHeight(div):
 #paint:绘图对象 
 #clipRect:裁剪区域
 def drawDivScrollBar(div, paint, clipRect):
+	#判断横向滚动条
 	if (div.m_showHScrollBar):
 		contentWidth = getDivContentWidth(div);
 		if (contentWidth > div.m_size.cx):
@@ -1106,6 +1117,7 @@ def drawDivScrollBar(div, paint, clipRect):
 			if (sRight - sLeft < div.m_scrollSize):
 				sRight = sLeft + div.m_scrollSize
 			paint.fillRect(div.m_scrollBarColor, sLeft, div.m_size.cy - div.m_scrollSize, sRight, div.m_size.cy)
+	#判断纵向滚动条
 	if(div.m_showVScrollBar):
 		contentHeight = getDivContentHeight(div)	
 		if (contentHeight > div.m_size.cy):
@@ -1172,6 +1184,7 @@ def mouseDownDiv(div, firstTouch, secondTouch, firstPoint, secondPoint):
 	div.m_startPoint = mp
 	div.m_downScrollHButton = FALSE
 	div.m_downScrollVButton = FALSE
+	#判断横向滚动条
 	if (div.m_showHScrollBar):
 		contentWidth = getDivContentWidth(div)
 		if (contentWidth > div.m_size.cx):
@@ -1183,6 +1196,7 @@ def mouseDownDiv(div, firstTouch, secondTouch, firstPoint, secondPoint):
 				div.m_downScrollHButton = TRUE
 				div.m_startScrollH = div.m_scrollH
 				return
+	#判断纵向滚动条
 	if (div.m_showVScrollBar):
 		contentHeight = getDivContentHeight(div)
 		if (contentHeight > div.m_size.cy):
@@ -1208,6 +1222,7 @@ def mouseMoveDiv(div, firstTouch, secondTouch, firstPoint, secondPoint):
 	if (firstTouch):
 		mp = firstPoint;
 		if (div.m_showHScrollBar or div.m_showVScrollBar):
+			#判断横向滚动条
 			if (div.m_downScrollHButton):
 				contentWidth = getDivContentWidth(div)
 				subX = (mp.x - div.m_startPoint.x) / div.m_size.cx * contentWidth
@@ -1219,6 +1234,7 @@ def mouseMoveDiv(div, firstTouch, secondTouch, firstPoint, secondPoint):
 				div.m_scrollH = newScrollH
 				m_cancelClick = TRUE
 				return
+			#判断纵向滚动条
 			elif (div.m_downScrollVButton):
 				contentHeight = getDivContentHeight(div)
 				subY = (mp.y - div.m_startPoint.y) / div.m_size.cy * contentHeight
@@ -1230,6 +1246,7 @@ def mouseMoveDiv(div, firstTouch, secondTouch, firstPoint, secondPoint):
 				div.m_scrollV = newScrollV
 				m_cancelClick = TRUE
 				return
+		#判断拖动
 		if (div.m_allowDragScroll):
 			contentWidth = getDivContentWidth(div)
 			if (contentWidth > div.m_size.cx):
@@ -1291,24 +1308,28 @@ def drawTabViewBorder(tabView, paint, clipRect):
 #th:页头按钮的高度
 def updataPageLayout(tabView, tabPage, left, top, width, height, tw, th):
 	newBounds = FCRect(0, 0, 0, 0)
+	#下方
 	if(tabView.m_layout == "bottom"):
 		newBounds.left = 0
 		newBounds.top = 0
 		newBounds.right = width
 		newBounds.bottom = height - th
 		tabPage.m_headerButton.m_location = FCPoint(left, height - th)
+	#左侧
 	elif(tabView.m_layout == "left"):
 		newBounds.left = tw
 		newBounds.top = 0
 		newBounds.right = width
 		newBounds.bottom = height
 		tabPage.m_headerButton.m_location = FCPoint(0, top)
+	#右侧
 	elif(tabView.m_layout == "right"):
 		newBounds.left = 0
 		newBounds.top = 0
 		newBounds.right = width - tw
 		newBounds.bottom = height
 		tabPage.m_headerButton.m_location = FCPoint(width - tw, top)
+	#上方
 	elif(tabView.m_layout == "top"):
 		newBounds.left = 0
 		newBounds.top = th
@@ -1387,6 +1408,7 @@ def resetLayoutDiv(layout):
 			nTop = cTop
 			nWidth = cWidth
 			nHeight = cHeight
+			#从下至上
 			if(layout.m_layoutStyle == "bottomtotop"):
 				if (i == 0):
 					top = height - padding.top
@@ -1404,6 +1426,7 @@ def resetLayoutDiv(layout):
 				nLeft = left + margin.left
 				nWidth = lWidth
 				nTop = top
+			#从左到右
 			elif(layout.m_layoutStyle == "lefttoright"):
 				lHeight = 0;
 				if (layout.m_autoWrap):
@@ -1420,6 +1443,7 @@ def resetLayoutDiv(layout):
 				nTop = top + margin.top
 				nHeight = lHeight
 				left += cWidth + margin.right
+			#从右到左
 			elif(layout.m_layoutStyle == "righttoleft"):
 				if (i == 0):
 					left = width - padding.left
@@ -1437,6 +1461,7 @@ def resetLayoutDiv(layout):
 				nLeft = left
 				nTop = top + margin.top
 				nHeight = lHeight
+			#从上至下
 			elif(layout.m_layoutStyle == "toptobottom"):
 				lWidth = 0
 				if (layout.m_autoWrap):
@@ -1474,6 +1499,7 @@ def resetSplitLayoutDiv(split):
 		splitterSize.cx = split.m_splitter.m_size.cx
 		splitterSize.cy = split.m_splitter.m_size.cy
 	layoutStyle = split.m_layoutStyle 
+	#从下至上
 	if (layoutStyle == "bottomtotop"):
 		if (split.m_splitMode == "absolutesize" or split.m_oldSize.cy == 0):
 			splitRect.left = 0
@@ -1495,6 +1521,7 @@ def resetSplitLayoutDiv(split):
 		sRect.top = 0
 		sRect.right = width
 		sRect.bottom = splitRect.top
+	#从左至右
 	elif(layoutStyle == "lefttoright"):
 		if (split.m_splitMode == "absolutesize" or split.m_oldSize.cx == 0):
 			splitRect.left = split.m_splitter.m_location.x
@@ -1516,6 +1543,7 @@ def resetSplitLayoutDiv(split):
 		sRect.top = 0
 		sRect.right = width
 		sRect.bottom = height
+	#从右到左
 	elif(layoutStyle == "righttoleft"):
 		if (split.m_splitMode == "absolutesize" or split.m_oldSize.cx == 0):
 			splitRect.left = width - (split.m_oldSize.cx - split.m_splitter.m_location.x)
@@ -1537,6 +1565,7 @@ def resetSplitLayoutDiv(split):
 		sRect.top = 0
 		sRect.right = splitRect.left
 		sRect.bottom = height
+	#从上至下
 	elif(layoutStyle == "toptobottom"):
 		if (split.m_splitMode == "absolutesize" or split.m_oldSize.cy == 0):
 			splitRect.left = 0
@@ -1558,6 +1587,7 @@ def resetSplitLayoutDiv(split):
 		sRect.top = splitRect.bottom
 		sRect.right = width
 		sRect.bottom = height
+	#重置分割条
 	if(split.m_splitter.m_visible):
 		spRect = FCRect(split.m_splitter.m_location.x,  split.m_splitter.m_location.y, split.m_splitter.m_location.x + split.m_splitter.m_size.cx, split.m_splitter.m_location.y + split.m_splitter.m_size.cy)
 		if (spRect.left != splitRect.left or spRect.top != splitRect.top or spRect.right != splitRect.right or spRect.bottom != splitRect.bottom):
@@ -1565,11 +1595,13 @@ def resetSplitLayoutDiv(split):
 			split.m_splitter.m_size = FCSize(splitRect.right - splitRect.left, splitRect.bottom - splitRect.top)
 			reset = TRUE
 	fcRect = FCRect(split.m_firstView.m_location.x,  split.m_firstView.m_location.y, split.m_firstView.m_location.x + split.m_firstView.m_size.cx, split.m_firstView.m_location.y + split.m_firstView.m_size.cy)
+	#重置第一个视图
 	if (fcRect.left != fRect.left or fcRect.top != fRect.top or fcRect.right != fRect.right or fcRect.bottom != fRect.bottom):
 		reset = TRUE;
 		split.m_firstView.m_location = FCPoint(fRect.left, fRect.top)
 		split.m_firstView.m_size = FCSize(fRect.right - fRect.left, fRect.bottom - fRect.top)
 	scRect = FCRect(split.m_secondView.m_location.x,  split.m_secondView.m_location.y, split.m_secondView.m_location.x + split.m_secondView.m_size.cx, split.m_secondView.m_location.y + split.m_secondView.m_size.cy)
+	#重置第二个视图
 	if (scRect.left != sRect.left or scRect.top != sRect.top or scRect.right != sRect.right or scRect.bottom != sRect.bottom):
 		reset = TRUE;
 		split.m_secondView.m_location = FCPoint(sRect.left, sRect.top)
@@ -1607,13 +1639,17 @@ def mouseWheelGrid(grid, delta):
 #right:右侧坐标 
 #bottom:下方坐标
 def drawGridCell(grid, row, column, cell, paint, left, top, right, bottom):
+	#绘制背景
 	if (cell.m_backColor != "none"):
 		paint.fillRect(cell.m_backColor, left, top, right, bottom)
+	#绘制选中
 	if(row.m_selected):
 		if(grid.m_seletedRowColor != "none"):
 			paint.fillRect(grid.m_seletedRowColor, left, top, right, bottom)
+	#绘制边线
 	if (cell.m_borderColor != "none"):
 		paint.drawRect(cell.m_borderColor, 1, 0, left, top, right, bottom)
+	#绘制数值
 	if (cell.m_value != None):
 		tSize = paint.textSize(str(cell.m_value), cell.m_font)
 		paint.drawText(str(cell.m_value), cell.m_textColor, cell.m_font, left + 2, top + grid.m_rowHeight / 2 - tSize.cy / 2)
@@ -1650,11 +1686,14 @@ def getGridContentHeight(grid):
 #bottom:下方坐标
 def drawGridColumn(grid, column, paint, left, top, right, bottom):
 	tSize = paint.textSize(column.m_text, column.m_font)
+	#绘制背景
 	if (column.m_backColor != "none"):
 		paint.fillRect(column.m_backColor, left, top, right, bottom)
+	#绘制边线
 	if (column.m_borderColor != "none"):
 		paint.drawRect(column.m_borderColor, 1, 0, left, top, right, bottom)
 	paint.drawText(column.m_text, column.m_textColor, column.m_font, left + (column.m_width - tSize.cx) / 2, top + grid.m_headerHeight / 2 - tSize.cy / 2)
+	#绘制升序箭头
 	if (column.m_sort == "asc"):
 		cR = (bottom - top) / 4
 		oX = right - cR * 2
@@ -1664,6 +1703,7 @@ def drawGridColumn(grid, column, paint, left, top, right, bottom):
 		drawPoints.append((oX - cR, oY + cR))
 		drawPoints.append((oX + cR, oY + cR))
 		paint.fillPolygon(column.m_textColor, drawPoints)
+	#绘制降序箭头
 	elif (column.m_sort == "desc"):
 		cR = (bottom - top) / 4
 		oX = right - cR * 2
@@ -1673,13 +1713,11 @@ def drawGridColumn(grid, column, paint, left, top, right, bottom):
 		drawPoints.append((oX - cR, oY - cR))
 		drawPoints.append((oX + cR, oY - cR))
 		paint.fillPolygon(column.m_textColor, drawPoints)
-	
-	
 
-m_paintGridCellCallBack = None #绘制单元格回调
-m_paintGridColumnCallBack = None #绘制列头的回调
-m_clickGridCellCallBack = None #点击单元格的回调
-m_clickGridColumnCallBack = None #点击列头的回调
+m_paintGridCellCallBack = None #绘制单元格的事件回调
+m_paintGridColumnCallBack = None #绘制列头的事件回调
+m_clickGridCellCallBack = None #点击单元格的事件回调
+m_clickGridColumnCallBack = None #点击列头的事件回调
 
 #绘制表格 
 #grid:表格
@@ -1689,6 +1727,7 @@ def drawGrid(grid, paint, clipRect):
 	cLeft = -grid.m_scrollH
 	cTop = -grid.m_scrollV + grid.m_headerHeight
 	colLeft = 0
+	#重置列头
 	for i in range(0, len(grid.m_columns)):
 		column = grid.m_columns[i]
 		colRect = FCRect(colLeft, 0, colLeft + grid.m_columns[i].m_width, grid.m_headerHeight)
@@ -1700,6 +1739,7 @@ def drawGrid(grid, paint, clipRect):
 		if(row.m_visible):
 			rTop = cTop
 			rBottom = cTop + grid.m_rowHeight
+			#绘制非冻结列
 			if (rBottom >= 0 and cTop <= grid.m_size.cy):
 				for j in range(0, len(row.m_cells)):
 					cell = row.m_cells[j]
@@ -1728,6 +1768,7 @@ def drawGrid(grid, paint, clipRect):
 									m_paintGridCellCallBack(grid, row, gridColumn, cell, paint, cRect.left, cRect.top, cRect.right, cRect.bottom)
 								else:
 									drawGridCell(grid, row, gridColumn, cell, paint, cRect.left, cRect.top, cRect.right, cRect.bottom)
+			#绘制冻结列
 			if (rBottom >= 0 and cTop <= grid.m_size.cy):
 				for j in range(0, len(row.m_cells)):
 					cell = row.m_cells[j]
@@ -1760,6 +1801,7 @@ def drawGrid(grid, paint, clipRect):
 				break;
 			cTop += grid.m_rowHeight
 	if (grid.m_headerHeight > 0):
+		#绘制非冻结列
 		for gridColumn in grid.m_columns:
 			if (gridColumn.m_visible):
 				if (gridColumn.m_frozen == FALSE):
@@ -1769,6 +1811,7 @@ def drawGrid(grid, paint, clipRect):
 						drawGridColumn(grid, gridColumn, paint, cLeft, 0, cLeft + gridColumn.m_width, grid.m_headerHeight)
 				cLeft += gridColumn.m_width
 		cLeft = 0;
+		#绘制冻结列
 		for gridColumn in grid.m_columns:
 			if (gridColumn.m_visible):
 				if (gridColumn.m_frozen):
@@ -1783,6 +1826,7 @@ def drawGrid(grid, paint, clipRect):
 #paint:绘图对象
 #clipRect:裁剪区域
 def drawGridScrollBar(grid, paint, clipRect):
+	#绘制横向滚动条
 	if (grid.m_showHScrollBar):
 		contentWidth = getGridContentWidth(grid)
 		if (contentWidth > grid.m_size.cx):
@@ -1791,6 +1835,7 @@ def drawGridScrollBar(grid, paint, clipRect):
 			if (sRight - sLeft < grid.m_scrollSize):
 				sRight = sLeft + grid.m_scrollSize
 			paint.fillRect(grid.m_scrollBarColor, sLeft, grid.m_size.cy - grid.m_scrollSize, sRight, grid.m_size.cy)
+	#绘制纵向滚动条
 	if(grid.m_showVScrollBar):
 		contentHeight = getGridContentHeight(grid)
 		if (contentHeight > grid.m_size.cy - grid.m_headerHeight):
@@ -1810,6 +1855,7 @@ def mouseMoveGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 	if (firstTouch):
 		mp = firstPoint;
 		if (grid.m_showHScrollBar or grid.m_showVScrollBar):
+			#判断横向滚动条
 			if (grid.m_downScrollHButton):
 				contentWidth = getGridContentWidth(grid)
 				subX = (mp.x - grid.m_startPoint.x) / grid.m_size.cx * contentWidth
@@ -1821,6 +1867,7 @@ def mouseMoveGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 				grid.m_scrollH = newScrollH
 				m_cancelClick = TRUE
 				return
+			#判断纵向滚动条
 			elif(grid.m_downScrollVButton):
 				contentHeight = getGridContentHeight(grid)
 				subY = (mp.y - grid.m_startPoint.y) / (grid.m_size.cy - grid.m_headerHeight - grid.m_scrollSize) * contentHeight
@@ -1832,6 +1879,7 @@ def mouseMoveGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 				grid.m_scrollV = newScrollV
 				m_cancelClick = TRUE
 				return
+		#处理拖动
 		if (grid.m_allowDragScroll):
 			contentWidth = getGridContentWidth(grid)
 			if (contentWidth > grid.m_size.cx - grid.m_scrollSize):
@@ -1867,6 +1915,7 @@ def mouseDownGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 	grid.m_startPoint = mp
 	grid.m_downScrollHButton = FALSE
 	grid.m_downScrollVButton = FALSE
+	#判断横向滚动条
 	if (grid.m_showHScrollBar):
 		contentWidth = getGridContentWidth(grid)
 		if (contentWidth > grid.m_size.cx - grid.m_scrollSize):
@@ -1878,6 +1927,7 @@ def mouseDownGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 				grid.m_downScrollHButton = TRUE
 				grid.m_startScrollH = grid.m_scrollH
 				return
+	#判断纵向滚动条
 	if(grid.m_showVScrollBar):
 		contentHeight = getGridContentHeight(grid)
 		if (contentHeight > grid.m_size.cy - grid.m_headerHeight - grid.m_scrollSize):
@@ -1907,6 +1957,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 	cLeft = -grid.m_scrollH
 	cTop = -grid.m_scrollV + grid.m_headerHeight
 	colLeft = 0
+	#重置列
 	for i in range(0, len(grid.m_columns)):
 		column = grid.m_columns[i]
 		colRect = FCRect(colLeft, 0, colLeft + grid.m_columns[i].m_width, grid.m_headerHeight)
@@ -1918,6 +1969,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 		if(row.m_visible):
 			rTop = cTop
 			rBottom = cTop + grid.m_rowHeight
+			#判断非冻结列
 			if (rBottom >= 0 and cTop <= grid.m_size.cy):
 				for j in range(0, len(row.m_cells)):
 					cell = row.m_cells[j]
@@ -1925,7 +1977,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 					if (gridColumn == None):
 						gridColumn = grid.m_columns[j]
 					if (gridColumn.m_visible):
-						if (gridColumn.m_frozen == FALSE):
+						if (gridColumn.m_frozen):
 							cellWidth = gridColumn.m_width
 							colSpan = cell.m_colSpan
 							if (colSpan > 1):
@@ -1951,6 +2003,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 									if(m_clickGridCellCallBack != None):
 										m_clickGridCellCallBack(grid, row, gridColumn, cell, firstTouch, secondTouch, firstPoint, secondPoint)
 									return;
+			#判断冻结列
 			if (rBottom >= 0 and cTop <= grid.m_size.cy):
 				for j in range(0, len(row.m_cells)):
 					cell = row.m_cells[j]
@@ -1958,7 +2011,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 					if (gridColumn == None):
 						gridColumn = grid.m_columns[j]
 					if (gridColumn.m_visible):
-						if (gridColumn.m_frozen):
+						if (gridColumn.m_frozen == FALSE):
 							cellWidth = gridColumn.m_width
 							colSpan = cell.m_colSpan
 							if (colSpan > 1):
@@ -1987,6 +2040,7 @@ def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 			if (cTop > grid.m_size.cy):
 				break;
 			cTop += grid.m_rowHeight
+	#判断列头
 	if (grid.m_headerHeight > 0 and firstPoint.y <= grid.m_headerHeight):
 		for gridColumn in grid.m_columns:
 			if (gridColumn.m_visible):
@@ -2063,6 +2117,7 @@ def getTreeContentHeight(tree):
 #paint:绘图对象
 #clipRect:裁剪区域
 def drawTreeScrollBar(tree, paint, clipRect):
+	#判断横向滚动条
 	if (tree.m_showHScrollBar):
 		contentWidth = getTreeContentWidth(tree)
 		if (contentWidth > tree.m_size.cx):
@@ -2071,6 +2126,7 @@ def drawTreeScrollBar(tree, paint, clipRect):
 			if (sRight - sLeft < tree.m_scrollSize):
 				sRight = sLeft + tree.m_scrollSize
 			paint.fillRect(tree.m_scrollBarColor, sLeft, tree.m_size.cy - tree.m_scrollSize, sRight, tree.m_size.cy)
+	#判断纵向滚动条
 	if(tree.m_showVScrollBar):
 		contentHeight = getTreeContentHeight(tree)	
 		if (contentHeight > tree.m_size.cy):
@@ -2091,6 +2147,7 @@ def drawTreeScrollBar(tree, paint, clipRect):
 #right:右侧坐标
 #bottom:下方坐标
 def drawTreeNode(tree, row, column, node, paint, left, top, right, bottom):
+	#绘制背景
 	if (node.m_backColor != "none"):
 		paint.fillRect(node.m_backColor, left, top, right, bottom)
 	if (node.m_value != None):
@@ -2098,13 +2155,14 @@ def drawTreeNode(tree, row, column, node, paint, left, top, right, bottom):
 		tLeft = left + 2 + getTotalIndent(node)
 		wLeft = tLeft;
 		cR = tree.m_checkBoxWidth / 3
+		#绘制复选框
 		if (tree.m_showCheckBox):
 			wLeft += tree.m_checkBoxWidth;
 			if (node.m_checked):
 				paint.fillRect(node.m_textColor, tLeft + (tree.m_checkBoxWidth - cR) / 2, top + (tree.m_rowHeight - cR) / 2, tLeft + (tree.m_checkBoxWidth + cR) / 2, top + (tree.m_rowHeight + cR) / 2)
 			else:
 				paint.drawRect(node.m_textColor, 1, 0, tLeft + (tree.m_checkBoxWidth - cR) / 2, top + (tree.m_rowHeight - cR) / 2, tLeft + (tree.m_checkBoxWidth + cR) / 2, top + (tree.m_rowHeight + cR) / 2)
-
+		#绘制箭头
 		if (len(node.m_childNodes) > 0):
 			drawPoints = []
 			if (node.m_collapsed):
@@ -2117,6 +2175,7 @@ def drawTreeNode(tree, row, column, node, paint, left, top, right, bottom):
 				drawPoints.append((wLeft + tree.m_collapsedWidth / 2, top + (tree.m_rowHeight + cR) / 2))
 			paint.fillPolygon(node.m_textColor, drawPoints)
 			wLeft += tree.m_collapsedWidth
+		#绘制文字
 		if (tSize.cx > column.m_width):
 			paint.drawTextAutoEllipsis(str(node.m_value), node.m_textColor, node.m_font, wLeft, top + tree.m_rowHeight / 2, wLeft + column.m_width, top + tree.m_rowHeight / 2)
 		else:
@@ -2128,8 +2187,8 @@ def updateTreeRowIndex(tree):
 	for i in range(0,len(tree.m_rows)):
 		tree.m_rows[i].m_index = i
 
-m_paintTreeNodeCallBack = None #绘图树节点的回调
-m_clickTreeNode = None #点击树节点的事件
+m_paintTreeNodeCallBack = None #绘图树节点的事件回调
+m_clickTreeNode = None #点击树节点的事件回调
 
 #绘制树
 #tree:树
@@ -2139,6 +2198,7 @@ def drawTree(tree, paint, clipRect):
 	cLeft = -tree.m_scrollH
 	cTop = -tree.m_scrollV + tree.m_headerHeight
 	colLeft = 0
+	#重置列头
 	for i in range(0,len(tree.m_columns)):
 		colRect = FCRect(colLeft, 0, colLeft + tree.m_columns[i].m_width, tree.m_headerHeight)
 		tree.m_columns[i].m_bounds = colRect
@@ -2271,6 +2331,7 @@ def mouseMoveTree(tree, firstTouch, secondTouch, firstPoint, secondPoint):
 	if (firstTouch):
 		mp = firstPoint;
 		if (tree.m_showHScrollBar or tree.m_showVScrollBar):
+			#判断横向滚动
 			if (tree.m_downScrollHButton):
 				contentWidth = getTreeContentWidth(tree)
 				subX = (mp.x - tree.m_startPoint.x) / tree.m_size.cx * contentWidth
@@ -2282,6 +2343,7 @@ def mouseMoveTree(tree, firstTouch, secondTouch, firstPoint, secondPoint):
 				tree.m_scrollH = newScrollH
 				m_cancelClick = TRUE
 				return
+			#判断纵向滚动
 			elif (tree.m_downScrollVButton):
 				contentHeight = getTreeContentHeight(tree)
 				subY = (mp.y - tree.m_startPoint.y) / (tree.m_size.cy - tree.m_headerHeight - tree.m_scrollSize) * contentHeight
@@ -2293,6 +2355,7 @@ def mouseMoveTree(tree, firstTouch, secondTouch, firstPoint, secondPoint):
 				tree.m_scrollV = newScrollV
 				m_cancelClick = TRUE
 				return
+		#判断拖动
 		if (tree.m_allowDragScroll):
 			contentWidth = getTreeContentWidth(tree)
 			if (contentWidth > tree.m_size.cx):
@@ -2328,6 +2391,7 @@ def mouseDownTree(tree, firstTouch, secondTouch, firstPoint, secondPoint):
 	tree.m_startPoint = mp
 	tree.m_downScrollHButton = FALSE
 	tree.m_downScrollVButton = FALSE
+	#判断横向滚动
 	if (tree.m_showHScrollBar):
 		contentWidth = getTreeContentWidth(tree)
 		if (contentWidth > tree.m_size.cx):
@@ -2339,6 +2403,7 @@ def mouseDownTree(tree, firstTouch, secondTouch, firstPoint, secondPoint):
 				tree.m_downScrollHButton = TRUE
 				tree.m_startScrollH = tree.m_scrollH
 				return
+	#判断纵向滚动
 	if (tree.m_showVScrollBar):
 		contentHeight = getTreeContentHeight(tree)
 		if (contentHeight > tree.m_size.cy):
