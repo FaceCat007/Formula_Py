@@ -4,6 +4,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Net;
 using System.IO;
+using System.Windows.Forms;
 
 namespace formula_cs
 {
@@ -28,50 +29,6 @@ namespace formula_cs
             Marshal.FreeHGlobal(bufferIntPtr);
             Marshal.FreeHGlobal(bufferIntPtr2);
             return state;
-        }
-
-        /// <summary>
-        /// 获取网页数据
-        /// </summary>
-        /// <param name="url">地址</param>
-        /// <returns>页面源码</returns>
-        public static String get(String url)
-        {
-            String content = "";
-            HttpWebRequest request = null;
-            HttpWebResponse response = null;
-            StreamReader streamReader = null;
-            Stream resStream = null;
-            try
-            {
-                request = (HttpWebRequest)WebRequest.Create(url);
-                request.KeepAlive = false;
-                request.Timeout = 10000;
-                ServicePointManager.DefaultConnectionLimit = 50;
-                response = (HttpWebResponse)request.GetResponse();
-                resStream = response.GetResponseStream();
-                streamReader = new StreamReader(resStream, Encoding.Default);
-                content = streamReader.ReadToEnd();
-            }
-            catch (Exception ex)
-            {
-            }
-            finally
-            {
-                if (response != null)
-                {
-                    response.Close();
-                }
-                if (resStream != null)
-                {
-                    resStream.Close();
-                }
-                if (streamReader != null)
-                {
-                    streamReader.Close();
-                }
-            }
-            return content;
         }
 
         /// <summary>
@@ -109,26 +66,20 @@ namespace formula_cs
         static void Main(string[] args)
         {
             String formula = "DIF:EMA(CLOSE,12)-EMA(CLOSE,26);DEA:EMA(DIF,9);MACD:(DIF-DEA)*2,COLORSTICK;";
-            String httpData = get("http://quotes.money.163.com/service/chddata.html?code=0000001");
-            String[] strs = httpData.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            String fileText = File.ReadAllText(Application.StartupPath + "\\SH600000.txt");
+            String[] strs = fileText.Split(new String[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
             List<SecurityData> datas = new List<SecurityData>();
-            int pos = 0;
-            for (int i = 1; i < strs.Length; i++)
+            for (int i = 2; i < strs.Length - 1; i++)
             {
-                String str = strs[i];
-                String []subStrs = str.Split(',');
-                if (subStrs.Length >= 8)
-                {
-                    SecurityData data = new SecurityData();
-                    data.m_date = i;
-                    data.m_close = Convert.ToDouble(subStrs[3]);
-                    data.m_high = Convert.ToDouble(subStrs[4]);
-                    data.m_low = Convert.ToDouble(subStrs[5]);
-                    data.m_open = Convert.ToDouble(subStrs[6]);
-                    data.m_volume = Convert.ToDouble(subStrs[11]);
-                    datas.Add(data);
-                    pos++;
-                }
+                String[] subStrs = strs[i].Split(',');
+                SecurityData data = new SecurityData();
+                data.m_date = i;
+                data.m_close = Convert.ToDouble(subStrs[4]);
+                data.m_high = Convert.ToDouble(subStrs[2]);
+                data.m_low = Convert.ToDouble(subStrs[3]);
+                data.m_open = Convert.ToDouble(subStrs[1]);
+                data.m_volume = Convert.ToDouble(subStrs[6]);
+                datas.Add(data);
             }
             //调用计算函数
             String shapes = "";

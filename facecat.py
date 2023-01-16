@@ -82,14 +82,16 @@ class FCPaint(object):
 		self.m_hOldFont = None #旧的字体
 		self.m_textSize = 19 #当前的字体大小
 		self.m_systemFont = "Segoe UI" #系统字体
-		self.m_gdiPlusPaint = None #GDI
+		self.m_gdiPlusPaint = None #GDI+对象
+		self.m_useGdiPlus = TRUE #是否使用GDI+
 	#开始绘图 
 	#rect:区域
 	def beginPaint(self, rect, pRect):
-		if(self.m_gdiPlusPaint == None):
-			self.m_gdiPlusPaint = GdiPlusPaint()
-			self.m_gdiPlusPaint.init()
-			self.m_gdiPlusPaint.createGdiPlus()
+		if(self.m_useGdiPlus):
+			if(self.m_gdiPlusPaint == None):
+				self.m_gdiPlusPaint = GdiPlusPaint()
+				self.m_gdiPlusPaint.init()
+				self.m_gdiPlusPaint.createGdiPlus()
 		if(self.m_gdiPlusPaint != None):
 			self.m_gdiPlusPaint.beginPaint(self.m_hdc, int(rect.left), int(rect.top), int(rect.right), int(rect.bottom), int(pRect.left), int(pRect.top), int(pRect.right), int(pRect.bottom))
 		else:
