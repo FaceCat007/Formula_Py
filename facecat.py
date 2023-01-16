@@ -264,7 +264,7 @@ class FCPaint(object):
 	#y:纵坐标
 	def drawText(self, text, color, font, x, y):
 		if(self.m_gdiPlusPaint != None):
-			newFont = font.split(" ")[1] + "," + font.split(" ")[0].replace("px", "")
+			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
 			self.m_gdiPlusPaint.drawTextWithPos(text, toColor(color), newFont, int(x), int(y))
 		else:
 			fontSize = float(font.split(" ")[0].replace("px", "")) + 7
@@ -396,7 +396,7 @@ class FCPaint(object):
 	#font:字体
 	def textSize(self, text, font):
 		if(self.m_gdiPlusPaint != None):
-			newFont = font.split(" ")[1] + "," + font.split(" ")[0].replace("px", "")
+			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
 			recvData = create_string_buffer(1024)
 			self.m_gdiPlusPaint.textSize(text, newFont, -1, recvData)
 			sizeStr = str(recvData.value, encoding="gbk")
@@ -427,7 +427,7 @@ class FCPaint(object):
 	#bottom:方坐标
 	def drawTextAutoEllipsis(self, text, color, font, left, top, right, bottom):
 		if(self.m_gdiPlusPaint != None):
-			newFont = font.split(" ")[1] + "," + font.split(" ")[0].replace("px", "")
+			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
 			self.m_gdiPlusPaint.drawTextAutoEllipsis(text, toColor(color), newFont, int(left), int(top), int(right), int(bottom))
 		else:
 			fontSize = float(font.split(" ")[0].replace("px", "")) + 7
@@ -6369,7 +6369,7 @@ class FCPie(FCView):
 	def __init__(self):
 		super().__init__()
 		self.m_pieRadius = 70 #饼图半径
-		self.m_textRadius = TRUE #是否可见
+		self.m_textRadius = 80 #是否可见
 		self.m_startAngle = 0 #开始角度
 		self.m_items = [] #数据项
 		self.m_type = "pie" #类型
@@ -6412,7 +6412,7 @@ def drawPie(pie, paint, clipRect):
 			y1 = oY + (pie.m_pieRadius) * math.sin((startAngle + sweepAngle / 2) * 3.1415926 / 180)
 			x2 = oX + (pie.m_textRadius) * math.cos((startAngle + sweepAngle / 2) * 3.1415926 / 180)
 			y2 = oY + (pie.m_textRadius) * math.sin((startAngle + sweepAngle / 2) * 3.1415926 / 180)
-			itemText = str(item.m_value)
+			itemText = item.m_text + " " + str(item.m_value)
 			itemTextSize = paint.textSize(itemText, pie.m_font)
 			paint.drawLine(pie.m_textColor, 1, 0, x1, y1, x2, y2);
 			x3 = oX + (pie.m_textRadius + itemTextSize.cx / 2 + 5) * math.cos((startAngle + sweepAngle / 2) * 3.1415926 / 180)
