@@ -340,7 +340,7 @@ def onViewPaint(view, paint, clipRect):
 	elif(view.m_type == "div" or view.m_type =="tabpage" or view.m_type =="tabview" or view.m_type =="layout"):
 		drawDiv(view, paint, clipRect)
 	elif(view.m_type == "textbox"):
-		if(paint.m_gdiPlusPaint.m_useGdiPlus):
+		if(paint.m_useGdiPlus):
 			paint.m_gdiPlusPaint.paintView(view.m_name, 0, 0, view.m_size.cx, view.m_size.cy)
 	else:
 		drawButton(view, paint, clipRect)
