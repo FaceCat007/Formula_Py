@@ -270,11 +270,27 @@ def readXmlNode(paint, node, parent):
 									gridColumn.m_borderColor = "rgb(150,150,150)"
 									gridColumn.m_textColor = "rgb(0,0,0)"
 			elif(view.m_type == "textbox"):
-				view.m_hWnd = win32gui.CreateWindowEx(0, "Edit", view.m_name, WS_VISIBLE|WS_CHILD|SS_CENTERIMAGE, 0, 0, 100, 30, paint.m_hWnd, 0, 0, None)
-				win32gui.ShowWindow(view.m_hWnd, SW_HIDE)
-				s = win32gui.GetWindowLong(view.m_hWnd, GWL_EXSTYLE)
-				win32gui.SetWindowLong(view.m_hWnd, GWL_EXSTYLE, s|ES_CENTER)
-				setHWndText(view.m_hWnd, view.m_text)
+				if(paint.m_useGdiPlus and len(view.m_name) > 0):
+					paint.init()
+					paint.m_gdiPlusPaint.createView("textbox", view.m_name)
+					if(view.m_paint.m_defaultUIStyle == "dark"):
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "backcolor", "rgb(0,0,0)")
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "bordercolor", "rgb(100,100,100)")
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "textcolor", "rgb(255,255,255)")
+					elif(view.m_paint.m_defaultUIStyle == "light"):
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "backcolor", "rgb(255,255,255)")
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "bordercolor", "rgb(150,150,150)")
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, "textcolor", "rgb(0,0,0)")
+					for key in child.attrib:
+						name = key.lower()
+						value = child.attrib[key]
+						paint.m_gdiPlusPaint.setAttribute(view.m_name, name, value)
+				else:
+					view.m_hWnd = win32gui.CreateWindowEx(0, "Edit", view.m_name, WS_VISIBLE|WS_CHILD|SS_CENTERIMAGE, 0, 0, 100, 30, paint.m_hWnd, 0, 0, None)
+					win32gui.ShowWindow(view.m_hWnd, SW_HIDE)
+					s = win32gui.GetWindowLong(view.m_hWnd, GWL_EXSTYLE)
+					win32gui.SetWindowLong(view.m_hWnd, GWL_EXSTYLE, s|ES_CENTER)
+					setHWndText(view.m_hWnd, view.m_text)
 			elif(view.m_type == "combobox"):
 				#https://blog.csdn.net/qq_31178679/article/details/125883494
 				view.m_hWnd = win32gui.CreateWindowEx(0, "ComboBox", view.m_name, WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_HASSTRINGS | CBS_DROPDOWNLIST, 0, 0, 100, 30, paint.m_hWnd, 0, 0, None)
@@ -323,6 +339,9 @@ def onViewPaint(view, paint, clipRect):
 			paint.drawText(view.m_text, view.m_textColor, view.m_font, 0, (view.m_size.cy - tSize.cy) / 2)
 	elif(view.m_type == "div" or view.m_type =="tabpage" or view.m_type =="tabview" or view.m_type =="layout"):
 		drawDiv(view, paint, clipRect)
+	elif(view.m_type == "textbox"):
+		if(paint.m_gdiPlusPaint.m_useGdiPlus):
+			paint.m_gdiPlusPaint.paintView(view.m_name, 0, 0, view.m_size.cx, view.m_size.cy)
 	else:
 		drawButton(view, paint, clipRect)
 
@@ -861,6 +880,11 @@ def WndProc(hwnd,msg,wParam,lParam):
 			ccx, ccy = win32gui.ScreenToClient(hwnd, (mx, my))
 			mp = FCPoint(ccx, ccy)
 			onMouseDown(mp, 1, 1, 0, m_paint)
+		elif msg == WM_LBUTTONDBLCLK:
+			mx, my = win32api.GetCursorPos()
+			ccx, ccy = win32gui.ScreenToClient(hwnd, (mx, my))
+			mp = FCPoint(ccx, ccy)
+			onMouseDown(mp, 1, 2, 0, m_paint)
 		elif msg == WM_LBUTTONUP:
 			mx, my = win32api.GetCursorPos()
 			ccx, ccy = win32gui.ScreenToClient(hwnd, (mx, my))
@@ -892,6 +916,14 @@ def WndProc(hwnd,msg,wParam,lParam):
 					view.m_size = FCSize(m_paint.m_size.cx, m_paint.m_size.cy)
 			updateView(m_paint.m_views)
 			invalidate(m_paint)
+		elif msg == WM_IME_COMPOSITION or msg == WM_IME_CHAR or msg == WM_IME_SETCONTEXT:
+			if(m_paint.m_useGdiPlus):
+				m_paint.m_gdiPlusPaint.onMessage(hwnd,msg,wParam,lParam)
+		elif msg == WM_CHAR or msg == WM_KEYDOWN or msg == WM_SYSKEYDOWN or msg == WM_KEYUP or msg == WM_SYSKEYUP:
+			if(facecat.m_focusedView != None and facecat.m_focusedView.m_type == "textbox"):
+				if(m_paint.m_useGdiPlus):
+					m_paint.m_gdiPlusPaint.onMessage(hwnd,msg,wParam,lParam)
+					invalidateView(facecat.m_focusedView, facecat.m_focusedView.m_paint)
 	return win32gui.DefWindowProc(hwnd,msg,wParam,lParam)
 
 wc = win32gui.WNDCLASS()
@@ -899,6 +931,7 @@ wc.hbrBackground = COLOR_BTNFACE + 1
 wc.hCursor = win32gui.LoadCursor(0,IDI_APPLICATION)
 wc.lpszClassName = "facecat-py"
 wc.lpfnWndProc = WndProc
+wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS
 reg = win32gui.RegisterClass(wc)
 hwnd = win32gui.CreateWindow(reg,'facecat-py',WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,0,0,0,None)
 m_paint.m_hWnd = hwnd

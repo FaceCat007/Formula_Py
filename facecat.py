@@ -84,6 +84,13 @@ class FCPaint(object):
 		self.m_systemFont = "Segoe UI" #系统字体
 		self.m_gdiPlusPaint = None #GDI+对象
 		self.m_useGdiPlus = TRUE #是否使用GDI+
+	#初始化
+	def init(self):
+		if(self.m_useGdiPlus):
+			if(self.m_gdiPlusPaint == None):
+				self.m_gdiPlusPaint = GdiPlusPaint()
+				self.m_gdiPlusPaint.init()
+				self.m_gdiPlusPaint.createGdiPlus(self.m_hWnd)
 	#开始绘图 
 	#rect:区域
 	def beginPaint(self, rect, pRect):
@@ -91,7 +98,7 @@ class FCPaint(object):
 			if(self.m_gdiPlusPaint == None):
 				self.m_gdiPlusPaint = GdiPlusPaint()
 				self.m_gdiPlusPaint.init()
-				self.m_gdiPlusPaint.createGdiPlus()
+				self.m_gdiPlusPaint.createGdiPlus(self.m_hWnd)
 		if(self.m_gdiPlusPaint != None):
 			self.m_gdiPlusPaint.beginPaint(self.m_hdc, int(rect.left), int(rect.top), int(rect.right), int(rect.bottom), int(pRect.left), int(pRect.top), int(pRect.right), int(pRect.bottom))
 		else:
@@ -551,6 +558,7 @@ m_mouseWheelCallBack = None #鼠标滚动的回调
 m_clickCallBack = None #点击的回调
 m_mouseEnterCallBack = None #鼠标进入的回调
 m_mouseLeaveCallBack = None #鼠标离开的回调
+m_isDoubleClick = FALSE #是否双击
 
 m_dragBeginPoint = FCPoint(0, 0) #拖动开始时的触摸位置
 m_dragBeginRect = FCRect(0, 0, 0, 0) #拖动开始时的区域
@@ -6249,11 +6257,18 @@ def onMouseMove(mp, buttons, clicks, delta, paint):
 	global m_draggingView
 	global m_mouseDownPoint
 	global m_mouseMoveCallBack
+	global m_focusedView
+	global m_isDoubleClick
 	if(m_mouseDownView != None):
 		m_mouseMoveView = m_mouseDownView
 		cmpPoint = FCPoint(mp.x - clientX(m_mouseDownView), mp.y - clientY(m_mouseDownView))
 		if(m_mouseMoveCallBack != None):
 			m_mouseMoveCallBack(m_mouseDownView, cmpPoint, 1, 1, 0)
+		if(m_isDoubleClick == FALSE):
+			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+				if(m_focusedView.m_paint.m_useGdiPlus):
+					m_focusedView.m_paint.m_gdiPlusPaint.mouseMoveView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), 1, 1)
+					invalidateView(m_focusedView, m_focusedView.m_paint)
 		if (m_mouseDownView.m_allowDrag):
 			if (abs(mp.x - m_mouseDownPoint.x) > 5 or abs(mp.y - m_mouseDownPoint.y) > 5):
 				m_dragBeginRect = FCRect(m_mouseDownView.m_location.x, m_mouseDownView.m_location.y, m_mouseDownView.m_location.x + m_mouseDownView.m_size.cx, m_mouseDownView.m_location.y + m_mouseDownView.m_size.cy)
@@ -6300,6 +6315,11 @@ def onMouseDown(mp, buttons, clicks, delta, paint):
 	global m_focusedView
 	global m_mouseDownPoint
 	global m_mouseDownCallBack
+	global m_isDoubleClick
+	if(clicks == 2):
+		m_isDoubleClick = TRUE
+	else:
+		m_isDoubleClick = FALSE
 	m_cancelClick = FALSE
 	m_mouseDownPoint = mp
 	topViews = paint.m_views
@@ -6309,6 +6329,11 @@ def onMouseDown(mp, buttons, clicks, delta, paint):
 		cmpPoint = FCPoint(mp.x - clientX(m_mouseDownView), mp.y - clientY(m_mouseDownView))
 		if(m_mouseDownCallBack != None):
 			m_mouseDownCallBack(m_mouseDownView, cmpPoint, 1, 1, 0)
+			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+				if(m_focusedView.m_paint.m_useGdiPlus):
+					m_focusedView.m_paint.m_gdiPlusPaint.focusView(m_focusedView.m_name)
+					m_focusedView.m_paint.m_gdiPlusPaint.mouseDownView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), buttons, clicks)
+					invalidateView(m_focusedView, m_focusedView.m_paint)
 
 #鼠标抬起方法
 #mp 坐标
@@ -6320,6 +6345,9 @@ def onMouseUp(mp, buttons, clicks, delta, paint):
 	global m_mouseDownView
 	global m_cancelClick
 	global m_mouseUpCallBack
+	global m_focusedView
+	global m_isDoubleClick
+	m_isDoubleClick = FALSE
 	if(m_mouseDownView != None):
 		cmpPoint = FCPoint(mp.x - clientX(m_mouseDownView), mp.y - clientY(m_mouseDownView))
 		topViews = paint.m_views
@@ -6333,6 +6361,11 @@ def onMouseUp(mp, buttons, clicks, delta, paint):
 			m_mouseDownView = None
 			if(m_mouseUpCallBack != None):
 				m_mouseUpCallBack(mouseDownView, cmpPoint, 1, 1, 0)
+			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+				if(m_focusedView.m_paint.m_useGdiPlus):
+					m_focusedView.m_paint.m_gdiPlusPaint.focusView(m_focusedView.m_name)
+					m_focusedView.m_paint.m_gdiPlusPaint.mouseUpView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), buttons, clicks)
+					invalidateView(m_focusedView, m_focusedView.m_paint)
 	m_draggingView = None
 
 #鼠标滚动方法
@@ -6433,8 +6466,8 @@ class GdiPlusPaint(object):
 		self.m_gdiPlus = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
 		cdll.argtypes = [c_char_p, c_int, c_float, c_double, c_long, c_wchar_p]
 	#创建GDI+
-	def createGdiPlus(self):
-		self.m_gID = self.m_gdiPlus.createGdiPlus()
+	def createGdiPlus(self, hWnd):
+		self.m_gID = self.m_gdiPlus.createGdiPlus(hWnd)
 	#销毁GDI+
 	def deleteGdiPlus(self):
 		return self.m_gdiPlus.deleteGdiPlus(self.m_gID)
@@ -6728,4 +6761,61 @@ class GdiPlusPaint(object):
 	#data 返回数据 create_string_buffer(1024000) cx,cy
 	def textSize(self, strText, font, width, data):
 		return self.m_gdiPlus.textSizeGdiPlus(self.m_gID, c_char_p(strText.encode('gbk')), c_char_p(font.encode('gbk')), c_int(width), data)
-
+	#消息循环
+	#hWnd 句柄
+	#message 消息ID
+	def onMessage(self, hWnd, message, wParam, lParam):
+		return self.m_gdiPlus.onMessage(self.m_gID, hWnd, message, wParam, lParam)
+	#创建视图
+	#typeStr 类型
+	#name 名称
+	def createView(self, typeStr, name):
+		return self.m_gdiPlus.createView(self.m_gID, c_char_p(typeStr.encode('gbk')), c_char_p(name.encode('gbk')))
+	#设置属性
+	#name 名称
+	#atrName 属性名称
+	#atrValue 属性值
+	def setAttribute(self, name, atrName, atrValue):
+		return self.m_gdiPlus.setAttribute(self.m_gID, c_char_p(name.encode('gbk')), c_char_p(atrName.encode('gbk')), c_char_p(atrValue.encode('gbk')))
+	#获取属性
+	#name 名称
+	#atrName 属性名称
+	#data 返回数据 create_string_buffer(1024000)
+	def getAttribute(self, name, atrName, data):
+		return self.m_gdiPlus.getAttribute(self.m_gID, c_char_p(name.encode('gbk')), c_char_p(atrName.encode('gbk')), data)
+	#获取属性
+	#name 名称
+    #left 左侧坐标
+    #top 顶部左标
+    #right 右侧坐标
+    #bottom 底部坐标
+	def paintView(self, name, left, top, right, bottom):
+		return self.m_gdiPlus.paintView(self.m_gID, c_char_p(name.encode('gbk')), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#设置焦点
+	#name 名称
+	def focusView(self, name):
+		return self.m_gdiPlus.focusView(self.m_gID, c_char_p(name.encode('gbk')))
+	#鼠标按下视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseDownView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseDownView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+	#鼠标抬起视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseUpView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseUpView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+	#鼠标移动视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseMoveView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseMoveView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
