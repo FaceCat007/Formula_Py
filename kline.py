@@ -271,8 +271,9 @@ def readXmlNode(paint, node, parent):
 									gridColumn.m_textColor = "rgb(0,0,0)"
 			elif(view.m_type == "textbox"):
 				if(paint.m_useGdiPlus and len(view.m_name) > 0):
+					view.m_exView = TRUE
 					paint.init()
-					paint.m_gdiPlusPaint.createView("textbox", view.m_name)
+					paint.m_gdiPlusPaint.createView(view.m_type, view.m_name)
 					if(view.m_paint.m_defaultUIStyle == "dark"):
 						paint.m_gdiPlusPaint.setAttribute(view.m_name, "backcolor", "rgb(0,0,0)")
 						paint.m_gdiPlusPaint.setAttribute(view.m_name, "bordercolor", "rgb(100,100,100)")
@@ -339,7 +340,7 @@ def onViewPaint(view, paint, clipRect):
 			paint.drawText(view.m_text, view.m_textColor, view.m_font, 0, (view.m_size.cy - tSize.cy) / 2)
 	elif(view.m_type == "div" or view.m_type =="tabpage" or view.m_type =="tabview" or view.m_type =="layout"):
 		drawDiv(view, paint, clipRect)
-	elif(view.m_type == "textbox"):
+	elif(view.m_exView):
 		if(paint.m_useGdiPlus):
 			paint.m_gdiPlusPaint.paintView(view.m_name, 0, 0, view.m_size.cx, view.m_size.cy)
 	else:
@@ -920,7 +921,7 @@ def WndProc(hwnd,msg,wParam,lParam):
 			if(m_paint.m_useGdiPlus):
 				m_paint.m_gdiPlusPaint.onMessage(hwnd,msg,wParam,lParam)
 		elif msg == WM_CHAR or msg == WM_KEYDOWN or msg == WM_SYSKEYDOWN or msg == WM_KEYUP or msg == WM_SYSKEYUP:
-			if(facecat.m_focusedView != None and facecat.m_focusedView.m_type == "textbox"):
+			if(facecat.m_focusedView != None and facecat.m_focusedView.m_exView):
 				if(m_paint.m_useGdiPlus):
 					m_paint.m_gdiPlusPaint.onMessage(hwnd,msg,wParam,lParam)
 					invalidateView(facecat.m_focusedView, facecat.m_focusedView.m_paint)

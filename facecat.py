@@ -543,6 +543,7 @@ class FCView(object):
 		self.m_pushedColor = "rgb(100,100,100)" #鼠标按下时的颜色
 		self.m_allowDrag = FALSE #是否允许拖动
 		self.m_allowDraw = TRUE #是否允许绘图
+		self.m_exView = FALSE #是否扩展视图
 
 m_cancelClick = FALSE #是否退出点击
 m_mouseDownView = None #鼠标按下的视图
@@ -6265,7 +6266,7 @@ def onMouseMove(mp, buttons, clicks, delta, paint):
 		if(m_mouseMoveCallBack != None):
 			m_mouseMoveCallBack(m_mouseDownView, cmpPoint, 1, 1, 0)
 		if(m_isDoubleClick == FALSE):
-			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+			if(m_focusedView != None and m_focusedView.m_exView):
 				if(m_focusedView.m_paint.m_useGdiPlus):
 					m_focusedView.m_paint.m_gdiPlusPaint.mouseMoveView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), 1, 1)
 					invalidateView(m_focusedView, m_focusedView.m_paint)
@@ -6325,11 +6326,15 @@ def onMouseDown(mp, buttons, clicks, delta, paint):
 	topViews = paint.m_views
 	m_mouseDownView = findView(mp, topViews)
 	if(m_mouseDownView != None):
+		if(m_focusedView and m_focusedView != m_mouseDownView and m_focusedView.m_exView):
+			if(m_focusedView.m_paint.m_useGdiPlus):
+					m_focusedView.m_paint.m_gdiPlusPaint.unFocusView(m_focusedView.m_name)
+					invalidateView(m_focusedView, m_focusedView.m_paint)
 		m_focusedView = m_mouseDownView
 		cmpPoint = FCPoint(mp.x - clientX(m_mouseDownView), mp.y - clientY(m_mouseDownView))
 		if(m_mouseDownCallBack != None):
 			m_mouseDownCallBack(m_mouseDownView, cmpPoint, 1, 1, 0)
-			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+			if(m_focusedView != None and m_focusedView.m_exView):
 				if(m_focusedView.m_paint.m_useGdiPlus):
 					m_focusedView.m_paint.m_gdiPlusPaint.focusView(m_focusedView.m_name)
 					m_focusedView.m_paint.m_gdiPlusPaint.mouseDownView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), buttons, clicks)
@@ -6361,7 +6366,7 @@ def onMouseUp(mp, buttons, clicks, delta, paint):
 			m_mouseDownView = None
 			if(m_mouseUpCallBack != None):
 				m_mouseUpCallBack(mouseDownView, cmpPoint, 1, 1, 0)
-			if(m_focusedView != None and m_focusedView.m_type == "textbox"):
+			if(m_focusedView != None and m_focusedView.m_exView):
 				if(m_focusedView.m_paint.m_useGdiPlus):
 					m_focusedView.m_paint.m_gdiPlusPaint.focusView(m_focusedView.m_name)
 					m_focusedView.m_paint.m_gdiPlusPaint.mouseUpView(m_focusedView.m_name, int(cmpPoint.x), int(cmpPoint.y), buttons, clicks)
@@ -6795,6 +6800,10 @@ class GdiPlusPaint(object):
 	#name 名称
 	def focusView(self, name):
 		return self.m_gdiPlus.focusView(self.m_gID, c_char_p(name.encode('gbk')))
+	#设置焦点
+	#name 名称
+	def unFocusView(self, name):
+		return self.m_gdiPlus.unFocusView(self.m_gID, c_char_p(name.encode('gbk')))
 	#鼠标按下视图
 	#name 名称
 	#x 横坐标
@@ -6819,3 +6828,26 @@ class GdiPlusPaint(object):
 	#clicks 点击次数
 	def mouseMoveView(self, name, x, y, buttons, clicks):
 		return self.m_gdiPlus.mouseMoveView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+
+#获取视图文本
+#view 视图
+#atrName 属性名称
+def getViewAttribute(view, atrName):
+	viewText = ""
+	if(view.m_paint.m_useGdiPlus):
+		recvData = create_string_buffer(102400)
+		view.m_paint.m_gdiPlusPaint.getAttribute(view.m_name, atrName, recvData)
+		viewText = str(recvData.value, encoding="gbk")
+	else:
+		viewText = getHWndText(view.m_hWnd)
+	return viewText
+
+#设置视图文本
+#view 视图
+#atrName 属性名称
+#text 文本
+def setViewAttribute(view, atrName, text):
+	if(view.m_paint.m_useGdiPlus):
+		view.m_paint.m_gdiPlusPaint.setAttribute(view.m_name, atrName, text)
+	else:
+		setHWndText(view.m_hWnd, text)
