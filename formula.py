@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 #! python3
 
-# FaceCat-Python-Wasm(OpenSource)
+# FaceCat-Python(OpenSource)
 #Shanghai JuanJuanMao Information Technology Co., Ltd 
 
 import math

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 #! python3
 
-# FaceCat-Python-Wasm(OpenSource)
+# FaceCat-Python(OpenSource)
 #Shanghai JuanJuanMao Information Technology Co., Ltd 
 
 import win32gui
@@ -17,25 +17,6 @@ import facecat
 import datetime
 import os
 from ctypes import *
-
-#更新悬浮状态
-#views:视图集合
-def updateView(views):
-	for i in range(0,len(views)):
-		view = views[i]
-		if(view.m_dock == "fill"):
-			if(view.m_parent != None and view.m_parent.m_type != "split"):
-				view.m_location = FCPoint(0, 0)
-				view.m_size = FCSize(view.m_parent.m_size.cx, view.m_parent.m_size.cy)
-		if(view.m_type == "split"):
-			resetSplitLayoutDiv(view)
-		elif(view.m_type == "tabview"):
-			updateTabLayout(view)
-		elif(view.m_type == "layout"):
-			resetLayoutDiv(view)
-		subViews = view.m_views
-		if(len(subViews) > 0):
-			updateView(subViews)
 
 #设置属性
 #view:视图
@@ -874,7 +855,7 @@ def WndProc(hwnd,msg,wParam,lParam):
 			for view in m_paint.m_views:
 				if view.m_dock == "fill":
 					view.m_size = FCSize(m_paint.m_size.cx, m_paint.m_size.cy)
-			updateView(m_paint.m_views)
+			updateViewDefault(m_paint.m_views)
 			invalidate(m_paint)
 		elif msg == WM_LBUTTONDOWN:
 			mx, my = win32api.GetCursorPos()
@@ -915,7 +896,7 @@ def WndProc(hwnd,msg,wParam,lParam):
 			for view in m_paint.m_views:
 				if view.m_dock == "fill":
 					view.m_size = FCSize(m_paint.m_size.cx, m_paint.m_size.cy)
-			updateView(m_paint.m_views)
+			updateViewDefault(m_paint.m_views)
 			invalidate(m_paint)
 		elif msg == WM_IME_COMPOSITION or msg == WM_IME_CHAR or msg == WM_IME_SETCONTEXT:
 			if(m_paint.m_useGdiPlus):
@@ -946,7 +927,7 @@ for view in m_paint.m_views:
 	if view.m_dock == "fill":
 		view.m_size = FCSize(m_paint.m_size.cx, m_paint.m_size.cy)
 initChart()
-updateView(m_paint.m_views)
+updateViewDefault(m_paint.m_views)
 win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)
 win32gui.UpdateWindow(hwnd)
 win32gui.PumpMessages()

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 #! python3
 
-# FaceCat-Python-Wasm(OpenSource)
+# FaceCat-Python(OpenSource)
 #Shanghai JuanJuanMao Information Technology Co., Ltd 
 
 import win32gui
@@ -408,7 +408,7 @@ class FCPaint(object):
 			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
 			recvData = create_string_buffer(1024)
 			self.m_gdiPlusPaint.textSize(text, newFont, -1, recvData)
-			sizeStr = str(recvData.value, encoding="gbk")
+			sizeStr = str(recvData.value, encoding=self.m_gdiPlusPaint.m_encoding)
 			return FCSize(int(sizeStr.split(",")[0]),int(sizeStr.split(",")[1]))
 		else:
 			fontSize = float(font.split(" ")[0].replace("px", "")) + 7
@@ -501,6 +501,376 @@ class FCPaint(object):
 				self.m_innerBM = None
 			self.m_innerHDC = self.m_drawHDC
 			self.m_innerBM = self.m_memBM
+
+#调用Gdi+的DLL
+class GdiPlusPaint(object):
+	def __init__(self):
+		self.m_gdiPlus = None #GDI+对象
+		self.m_gID = 0 #GDI+的编号
+		self.m_encoding = "gbk" #解析编码
+	#初始化
+	def init(self):
+		self.m_gdiPlus = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
+		cdll.argtypes = [c_char_p, c_int, c_float, c_double, c_long, c_wchar_p]
+	#创建GDI+
+	def createGdiPlus(self, hWnd):
+		self.m_gID = self.m_gdiPlus.createGdiPlus(hWnd)
+	#销毁GDI+
+	def deleteGdiPlus(self):
+		return self.m_gdiPlus.deleteGdiPlus(self.m_gID)
+    #添加曲线
+    #rect 矩形区域
+    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
+    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
+	def addArc(self, left, top, right, bottom, startAngle, sweepAngle):
+		return self.m_gdiPlus.addArcGdiPlus(self.m_gID, left, top, right, bottom, startAngle, sweepAngle)
+	#添加贝赛尔曲线
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def addBezier(self, strApt):
+		return self.m_gdiPlus.addBezierGdiPlus(self.m_gID, c_char_p(strApt.encode(self.m_encoding)))
+	#添加曲线
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def addCurve(self, strApt):
+		return self.m_gdiPlus.addCurveGdiPlus(self.m_gID, c_char_p(strApt.encode(self.m_encoding)))
+	#添加椭圆
+    #rect 矩形
+	def addEllipse(self, left, top, right, bottom):
+		return self.m_gdiPlus.addEllipseGdiPlus(self.m_gID, left, top, right, bottom)
+	#添加直线
+    #x1 第一个点的横坐标
+    #y1 第一个点的纵坐标（以度为单位）
+    #x2 第二个点的横坐标
+    #y2 第二个点的纵坐标
+	def addLine(self, x1, y1, x2, y2):
+		return self.m_gdiPlus.addLineGdiPlus(self.m_gID, x1, y1, x2, y2)
+	#添加矩形
+    #rect 区域
+	def addRect(self, left, top, right, bottom):
+		return self.m_gdiPlus.addRectGdiPlus(self.m_gID, left, top, right, bottom)
+	#添加扇形
+    #rect 矩形区域
+    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
+    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
+	def addPie(self, left, top, right, bottom, startAngle, sweepAngle):
+		return self.m_gdiPlus.addPieGdiPlus(self.m_gID, left, top, right, bottom, startAngle, sweepAngle)
+    #添加文字
+    #text 文字
+    #font 字体
+    #rect 区域
+	def addText(self, text, font, left, top, right, bottom, width):
+		return self.m_gdiPlus.addTextGdiPlus(self.m_gID, c_char_p(text.encode(self.m_encoding)), c_char_p(font.encode(self.m_encoding)), left, top, right, bottom, width)
+	#开始导出
+    #exportPath  路径
+    #rect 区域
+	def beginExport(self, exportPath, left, top, right, bottom):
+		return self.m_gdiPlus.beginExportGdiPlus(self.m_gID, c_char_p(exportPath.encode(self.m_encoding)), left, top, right, bottom)
+	#开始绘图
+	#hdc HDC
+	#wRect 窗体区域
+	#pRect 刷新区域
+	def beginPaint(self, hDC, wLeft, wTop, wRight, wBottom, pLeft, pTop, pRight, pBottom):
+		return self.m_gdiPlus.beginPaintGdiPlus(self.m_gID, hDC, c_int(wLeft), c_int(wTop), c_int(wRight), c_int(wBottom), c_int(pLeft), c_int(pTop), c_int(pRight), c_int(pBottom))
+	#开始一段路径
+	def beginPath(self):
+		return self.m_gdiPlus.beginPathGdiPlus(self.m_gID)
+	#裁剪路径
+	def clipPath(self):
+		return self.m_gdiPlus.clipPathGdiPlus(self.m_gID)
+	#清除缓存
+	def clearCaches(self):
+		return self.m_gdiPlus.clearCachesGdiPlus(self.m_gID)
+	#闭合路径
+	def closeFigure(self):
+		return self.m_gdiPlus.closeFigureGdiPlus(self.m_gID)
+	#结束一段路径
+	def closePath(self):
+		return self.m_gdiPlus.closePathGdiPlus(self.m_gID)
+	#绘制弧线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #rect 矩形区域
+    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
+    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
+	def drawArc(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
+		return self.m_gdiPlus.drawArcGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
+	#设置贝赛尔曲线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def drawBezier(self, dwPenColor, width, style, strApt):
+		return self.m_gdiPlus.drawBezierGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+	#绘制曲线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def drawCurve(self, dwPenColor, width, style, strApt):
+		return self.m_gdiPlus.drawCurveGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+	#绘制椭圆
+    #dwPenColor 颜色
+    #width 宽度
+    # style 样式
+    #left 左侧坐标
+    #top 顶部左标
+    #right 右侧坐标
+    #bottom 底部坐标
+	def drawEllipse(self, dwPenColor, width, style, left, top, right, bottom):
+		return self.m_gdiPlus.drawEllipseGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#绘制图片
+    #imagePath 图片路径
+    #rect 绘制区域
+	def drawImage(self, imagePath, left, top, right, bottom):
+		return self.m_gdiPlus.drawImageGdiPlus(self.m_gID, c_char_p(imagePath.encode(self.m_encoding)), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#绘制直线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #x1 第一个点的横坐标
+    #y1 第一个点的纵坐标
+    #x2 第二个点的横坐标
+    #y2 第二个点的纵坐标
+	def drawLine(self, dwPenColor, width, style, x1, y1, x2, y2):
+		return self.m_gdiPlus.drawLineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(x1), c_int(y1), c_int(x2), c_int(y2))
+	#绘制直线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+	def drawPath(self, dwPenColor, width, style):
+		return self.m_gdiPlus.drawPathGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0))
+	#绘制扇形
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #rect 矩形区域
+    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
+    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
+	def drawPie(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
+		return self.m_gdiPlus.drawPieGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
+	#绘制多边形
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def drawPolygon(self, dwPenColor, width, style, strApt):
+		return self.m_gdiPlus.drawPolygonGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+	#绘制大量直线
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def drawPolyline(self, dwPenColor, width, style, strApt):
+		return self.m_gdiPlus.drawPolylineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+	#绘制矩形
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #rect 矩形区域
+	def drawRect(self, dwPenColor, width, style, left, top, right, bottom):
+		return self.m_gdiPlus.drawRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#绘制圆角矩形
+    #dwPenColor 颜色
+    #width 宽度
+    #style 样式
+    #rect 矩形区域
+    #cornerRadius 边角半径
+	def drawRoundRect(self, dwPenColor, width, style, left, top, right, bottom, cornerRadius):
+		return self.m_gdiPlus.drawRoundRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
+	#绘制文字
+    #text 文字
+    #dwPenColor 颜色
+    #font 字体
+    #rect 矩形区域
+	def drawText(self, strText, dwPenColor, font, left, top, right, bottom, width):
+		return self.m_gdiPlus.drawTextGdiPlus(self.m_gID, c_char_p(strText.encode(self.m_encoding)), dwPenColor, c_char_p(font.encode(self.m_encoding)), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#绘制文字
+    #text 文字
+    #dwPenColor 颜色
+    #font 字体
+    #rect 矩形区域
+	def drawTextWithPos(self, strText, dwPenColor, font, x, y):
+		return self.m_gdiPlus.drawTextWithPosGdiPlus(self.m_gID, c_char_p(strText.encode(self.m_encoding)), dwPenColor, c_char_p(font.encode(self.m_encoding)), c_int(x), c_int(y))
+	#绘制自动省略结尾的文字
+    #text 文字
+    #dwPenColor 颜色
+    #font 字体
+    #rect 矩形区域
+	def drawTextAutoEllipsis(self, strText, dwPenColor, font, left, top, right, bottom):
+		return self.m_gdiPlus.drawTextAutoEllipsisGdiPlus(self.m_gID, c_char_p(strText.encode(self.m_encoding)), dwPenColor, c_char_p(font.encode(self.m_encoding)), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#结束导出
+	def endExport(self):
+		return self.m_gdiPlus.endExportGdiPlus(self.m_gID)
+	#结束绘图
+	def endPaint(self):
+		return self.m_gdiPlus.endPaintGdiPlus(self.m_gID)
+	#反裁剪路径
+	def excludeClipPath(self):
+		return self.m_gdiPlus.excludeClipPathGdiPlus(self.m_gID)
+	#填充椭圆
+    #dwPenColor 颜色
+    #rect 矩形区域
+	def fillEllipse(self, dwPenColor, left, top, right, bottom):
+		return self.m_gdiPlus.fillEllipseGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#绘制渐变椭圆
+    #dwFirst 开始颜色
+    #dwSecond  结束颜色
+    #rect 矩形区域
+    #angle 角度
+	def fillGradientEllipse(self, dwFirst, dwSecond, left, top, right, bottom, angle):
+		return self.m_gdiPlus.fillGradientEllipseGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(angle))
+	#填充渐变路径
+    #dwFirst 开始颜色
+    #dwSecond  结束颜色
+    #rect 矩形区域
+    #angle 角度
+	def fillGradientPath(self, dwFirst, dwSecond, left, top, right, bottom, angle):
+		return self.m_gdiPlus.fillGradientPathGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(angle))
+	#绘制渐变的多边形
+    #dwFirst 开始颜色
+    #dwSecond  开始颜色
+    #strApt 点阵字符串 x1,y1 x2,y2...
+    #angle 角度
+	def fillGradientPolygon(self, dwFirst, dwSecond, strApt, angle):
+		return self.m_gdiPlus.fillGradientPolygonGdiPlus(self.m_gID, dwFirst, dwSecond, c_char_p(strApt.encode(self.m_encoding)), c_int(angle))
+	#绘制渐变矩形
+    #dwFirst 开始颜色
+    #dwSecond 开始颜色
+    #rect 矩形
+    #cornerRadius 边角半径
+    #angle 角度
+	def fillGradientRect(self, dwFirst, dwSecond, left, top, right, bottom, cornerRadius, angle):
+		return self.m_gdiPlus.fillGradientRectGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius), c_int(angle))
+	#填充路径
+    #dwPenColor 颜色
+	def fillPath(self, dwPenColor):
+		return self.m_gdiPlus.fillPathGdiPlus(self.m_gID, dwPenColor)
+	#绘制扇形
+    #dwPenColor 颜色
+    #rect 矩形区域
+    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
+    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
+	def fillPie(self, dwPenColor, left, top, right, bottom, startAngle, sweepAngle):
+		return self.m_gdiPlus.fillPieGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
+	#填充多边形
+    #dwPenColor 颜色
+    #strApt 点阵字符串 x1,y1 x2,y2...
+	def fillPolygon(self, dwPenColor, strApt):
+		return self.m_gdiPlus.fillPolygonGdiPlus(self.m_gID, dwPenColor, c_char_p(strApt.encode(self.m_encoding)))
+	#填充矩形
+    #dwPenColor 颜色
+    #left 左侧坐标
+    #top 顶部左标
+    #right 右侧坐标
+    #bottom 底部坐标
+	def fillRect(self, dwPenColor, left, top, right, bottom):
+		return self.m_gdiPlus.fillRectGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#填充圆角矩形
+    #dwPenColor 颜色
+    #rect 矩形区域
+    #cornerRadius 边角半径
+	def fillRoundRect(self, dwPenColor, left, top, right, bottom, cornerRadius):
+		return self.m_gdiPlus.fillRoundRectGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
+	#设置裁剪区域
+    #rect 区域
+	def setClip(self, left, top, right, bottom):
+		return self.m_gdiPlus.setClipGdiPlus(self.m_gID, c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#设置直线两端的样式
+    #startLineCap 开始的样式
+    #endLineCap  结束的样式
+	def setLineCap(self, startLineCap, endLineCap):
+		return self.m_gdiPlus.setLineCapGdiPlus(self.m_gID, c_int(startLineCap), c_int(endLineCap))
+	#设置偏移
+    #mp 偏移坐标
+	def setOffset(self, offsetX, offsetY):
+		return self.m_gdiPlus.setOffsetGdiPlus(self.m_gID, c_int(offsetX), c_int(offsetY))
+	#设置透明度
+    #opacity 透明度
+	def setOpacity(self, opacity):
+		return self.m_gdiPlus.setOpacityGdiPlus(self.m_gID, c_float(opacity))
+	#设置资源的路径
+    #resourcePath 资源的路径
+	def setResourcePath(self, resourcePath):
+		return self.m_gdiPlus.setResourcePathGdiPlus(self.m_gID, c_char_p(resourcePath.encode(self.m_encoding)))
+	#设置旋转角度
+    #rotateAngle 旋转角度
+	def setRotateAngle(self, rotateAngle):
+		return self.m_gdiPlus.setRotateAngleGdiPlus(self.m_gID, c_int(rotateAngle))
+	#设置缩放因子
+    #scaleFactorX 横向因子
+    #scaleFactorY 纵向因子
+	def setScaleFactor(self, scaleFactorX, scaleFactorY):
+		return self.m_gdiPlus.setScaleFactorGdiPlus(self.m_gID, c_double(scaleFactorX), c_double(scaleFactorY))
+	#获取文字大小
+    #text 文字
+    #font 字体
+	#width 字符最大宽度
+	#data 返回数据 create_string_buffer(1024000) cx,cy
+	def textSize(self, strText, font, width, data):
+		return self.m_gdiPlus.textSizeGdiPlus(self.m_gID, c_char_p(strText.encode(self.m_encoding)), c_char_p(font.encode(self.m_encoding)), c_int(width), data)
+	#消息循环
+	#hWnd 句柄
+	#message 消息ID
+	def onMessage(self, hWnd, message, wParam, lParam):
+		return self.m_gdiPlus.onMessage(self.m_gID, hWnd, message, wParam, lParam)
+	#创建视图
+	#typeStr 类型
+	#name 名称
+	def createView(self, typeStr, name):
+		return self.m_gdiPlus.createView(self.m_gID, c_char_p(typeStr.encode(self.m_encoding)), c_char_p(name.encode(self.m_encoding)))
+	#设置属性
+	#name 名称
+	#atrName 属性名称
+	#atrValue 属性值
+	def setAttribute(self, name, atrName, atrValue):
+		return self.m_gdiPlus.setAttribute(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_char_p(atrName.encode(self.m_encoding)), c_char_p(atrValue.encode(self.m_encoding)))
+	#获取属性
+	#name 名称
+	#atrName 属性名称
+	#data 返回数据 create_string_buffer(1024000)
+	def getAttribute(self, name, atrName, data):
+		return self.m_gdiPlus.getAttribute(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_char_p(atrName.encode(self.m_encoding)), data)
+	#获取属性
+	#name 名称
+    #left 左侧坐标
+    #top 顶部左标
+    #right 右侧坐标
+    #bottom 底部坐标
+	def paintView(self, name, left, top, right, bottom):
+		return self.m_gdiPlus.paintView(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_int(left), c_int(top), c_int(right), c_int(bottom))
+	#设置焦点
+	#name 名称
+	def focusView(self, name):
+		return self.m_gdiPlus.focusView(self.m_gID, c_char_p(name.encode(self.m_encoding)))
+	#设置焦点
+	#name 名称
+	def unFocusView(self, name):
+		return self.m_gdiPlus.unFocusView(self.m_gID, c_char_p(name.encode(self.m_encoding)))
+	#鼠标按下视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseDownView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseDownView(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+	#鼠标抬起视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseUpView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseUpView(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+	#鼠标移动视图
+	#name 名称
+	#x 横坐标
+	#y 纵坐标
+	#buttons 按钮
+	#clicks 点击次数
+	def mouseMoveView(self, name, x, y, buttons, clicks):
+		return self.m_gdiPlus.mouseMoveView(self.m_gID, c_char_p(name.encode(self.m_encoding)), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
+
 
 #基础视图
 class FCView(object):
@@ -6240,6 +6610,8 @@ def updateViewDefault(views):
 			updateTabLayout(view)
 		elif(view.m_type == "layout"):
 			resetLayoutDiv(view)
+		elif(view.m_type == "calendar"):
+			updateCalendar(view)
 		subViews = view.m_views
 		if(len(subViews) > 0):
 			updateViewDefault(subViews)
@@ -6461,374 +6833,6 @@ def drawPie(pie, paint, clipRect):
 			startAngle += sweepAngle
 	paint.drawEllipse(pie.m_borderColor, 1, 0, eRect.left, eRect.top, eRect.right, eRect.bottom)
 
-#调用Gdi+的DLL
-class GdiPlusPaint(object):
-	def __init__(self):
-		self.m_gdiPlus = None #GDI+对象
-		self.m_gID = 0 #GDI+的编号
-	#初始化
-	def init(self):
-		self.m_gdiPlus = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
-		cdll.argtypes = [c_char_p, c_int, c_float, c_double, c_long, c_wchar_p]
-	#创建GDI+
-	def createGdiPlus(self, hWnd):
-		self.m_gID = self.m_gdiPlus.createGdiPlus(hWnd)
-	#销毁GDI+
-	def deleteGdiPlus(self):
-		return self.m_gdiPlus.deleteGdiPlus(self.m_gID)
-    #添加曲线
-    #rect 矩形区域
-    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
-    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
-	def addArc(self, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.addArcGdiPlus(self.m_gID, left, top, right, bottom, startAngle, sweepAngle)
-	#添加贝赛尔曲线
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def addBezier(self, strApt):
-		return self.m_gdiPlus.addBezierGdiPlus(self.m_gID, c_char_p(strApt.encode('gbk')))
-	#添加曲线
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def addCurve(self, strApt):
-		return self.m_gdiPlus.addCurveGdiPlus(self.m_gID, c_char_p(strApt.encode('gbk')))
-	#添加椭圆
-    #rect 矩形
-	def addEllipse(self, left, top, right, bottom):
-		return self.m_gdiPlus.addEllipseGdiPlus(self.m_gID, left, top, right, bottom)
-	#添加直线
-    #x1 第一个点的横坐标
-    #y1 第一个点的纵坐标（以度为单位）
-    #x2 第二个点的横坐标
-    #y2 第二个点的纵坐标
-	def addLine(self, x1, y1, x2, y2):
-		return self.m_gdiPlus.addLineGdiPlus(self.m_gID, x1, y1, x2, y2)
-	#添加矩形
-    #rect 区域
-	def addRect(self, left, top, right, bottom):
-		return self.m_gdiPlus.addRectGdiPlus(self.m_gID, left, top, right, bottom)
-	#添加扇形
-    #rect 矩形区域
-    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
-    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
-	def addPie(self, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.addPieGdiPlus(self.m_gID, left, top, right, bottom, startAngle, sweepAngle)
-    #添加文字
-    #text 文字
-    #font 字体
-    #rect 区域
-	def addText(self, text, font, left, top, right, bottom, width):
-		return self.m_gdiPlus.addTextGdiPlus(self.m_gID, c_char_p(text.encode('gbk')), c_char_p(font.encode('gbk')), left, top, right, bottom, width)
-	#开始导出
-    #exportPath  路径
-    #rect 区域
-	def beginExport(self, exportPath, left, top, right, bottom):
-		return self.m_gdiPlus.beginExportGdiPlus(self.m_gID, c_char_p(exportPath.encode('gbk')), left, top, right, bottom)
-	#开始绘图
-	#hdc HDC
-	#wRect 窗体区域
-	#pRect 刷新区域
-	def beginPaint(self, hDC, wLeft, wTop, wRight, wBottom, pLeft, pTop, pRight, pBottom):
-		return self.m_gdiPlus.beginPaintGdiPlus(self.m_gID, hDC, c_int(wLeft), c_int(wTop), c_int(wRight), c_int(wBottom), c_int(pLeft), c_int(pTop), c_int(pRight), c_int(pBottom))
-	#开始一段路径
-	def beginPath(self):
-		return self.m_gdiPlus.beginPathGdiPlus(self.m_gID)
-	#裁剪路径
-	def clipPath(self):
-		return self.m_gdiPlus.clipPathGdiPlus(self.m_gID)
-	#清除缓存
-	def clearCaches(self):
-		return self.m_gdiPlus.clearCachesGdiPlus(self.m_gID)
-	#闭合路径
-	def closeFigure(self):
-		return self.m_gdiPlus.closeFigureGdiPlus(self.m_gID)
-	#结束一段路径
-	def closePath(self):
-		return self.m_gdiPlus.closePathGdiPlus(self.m_gID)
-	#绘制弧线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #rect 矩形区域
-    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
-    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
-	def drawArc(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.drawArcGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
-	#设置贝赛尔曲线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def drawBezier(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawBezierGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode('gbk')))
-	#绘制曲线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def drawCurve(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawCurveGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode('gbk')))
-	#绘制椭圆
-    #dwPenColor 颜色
-    #width 宽度
-    # style 样式
-    #left 左侧坐标
-    #top 顶部左标
-    #right 右侧坐标
-    #bottom 底部坐标
-	def drawEllipse(self, dwPenColor, width, style, left, top, right, bottom):
-		return self.m_gdiPlus.drawEllipseGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#绘制图片
-    #imagePath 图片路径
-    #rect 绘制区域
-	def drawImage(self, imagePath, left, top, right, bottom):
-		return self.m_gdiPlus.drawImageGdiPlus(self.m_gID, c_char_p(imagePath.encode('gbk')), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#绘制直线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #x1 第一个点的横坐标
-    #y1 第一个点的纵坐标
-    #x2 第二个点的横坐标
-    #y2 第二个点的纵坐标
-	def drawLine(self, dwPenColor, width, style, x1, y1, x2, y2):
-		return self.m_gdiPlus.drawLineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(x1), c_int(y1), c_int(x2), c_int(y2))
-	#绘制直线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-	def drawPath(self, dwPenColor, width, style):
-		return self.m_gdiPlus.drawPathGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0))
-	#绘制扇形
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #rect 矩形区域
-    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
-    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
-	def drawPie(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.drawPieGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
-	#绘制多边形
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def drawPolygon(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawPolygonGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode('gbk')))
-	#绘制大量直线
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def drawPolyline(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawPolylineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode('gbk')))
-	#绘制矩形
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #rect 矩形区域
-	def drawRect(self, dwPenColor, width, style, left, top, right, bottom):
-		return self.m_gdiPlus.drawRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#绘制圆角矩形
-    #dwPenColor 颜色
-    #width 宽度
-    #style 样式
-    #rect 矩形区域
-    #cornerRadius 边角半径
-	def drawRoundRect(self, dwPenColor, width, style, left, top, right, bottom, cornerRadius):
-		return self.m_gdiPlus.drawRoundRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
-	#绘制文字
-    #text 文字
-    #dwPenColor 颜色
-    #font 字体
-    #rect 矩形区域
-	def drawText(self, strText, dwPenColor, font, left, top, right, bottom, width):
-		return self.m_gdiPlus.drawTextGdiPlus(self.m_gID, c_char_p(strText.encode('gbk')), dwPenColor, c_char_p(font.encode('gbk')), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#绘制文字
-    #text 文字
-    #dwPenColor 颜色
-    #font 字体
-    #rect 矩形区域
-	def drawTextWithPos(self, strText, dwPenColor, font, x, y):
-		return self.m_gdiPlus.drawTextWithPosGdiPlus(self.m_gID, c_char_p(strText.encode('gbk')), dwPenColor, c_char_p(font.encode('gbk')), c_int(x), c_int(y))
-	#绘制自动省略结尾的文字
-    #text 文字
-    #dwPenColor 颜色
-    #font 字体
-    #rect 矩形区域
-	def drawTextAutoEllipsis(self, strText, dwPenColor, font, left, top, right, bottom):
-		return self.m_gdiPlus.drawTextAutoEllipsisGdiPlus(self.m_gID, c_char_p(strText.encode('gbk')), dwPenColor, c_char_p(font.encode('gbk')), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#结束导出
-	def endExport(self):
-		return self.m_gdiPlus.endExportGdiPlus(self.m_gID)
-	#结束绘图
-	def endPaint(self):
-		return self.m_gdiPlus.endPaintGdiPlus(self.m_gID)
-	#反裁剪路径
-	def excludeClipPath(self):
-		return self.m_gdiPlus.excludeClipPathGdiPlus(self.m_gID)
-	#填充椭圆
-    #dwPenColor 颜色
-    #rect 矩形区域
-	def fillEllipse(self, dwPenColor, left, top, right, bottom):
-		return self.m_gdiPlus.fillEllipseGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#绘制渐变椭圆
-    #dwFirst 开始颜色
-    #dwSecond  结束颜色
-    #rect 矩形区域
-    #angle 角度
-	def fillGradientEllipse(self, dwFirst, dwSecond, left, top, right, bottom, angle):
-		return self.m_gdiPlus.fillGradientEllipseGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(angle))
-	#填充渐变路径
-    #dwFirst 开始颜色
-    #dwSecond  结束颜色
-    #rect 矩形区域
-    #angle 角度
-	def fillGradientPath(self, dwFirst, dwSecond, left, top, right, bottom, angle):
-		return self.m_gdiPlus.fillGradientPathGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(angle))
-	#绘制渐变的多边形
-    #dwFirst 开始颜色
-    #dwSecond  开始颜色
-    #strApt 点阵字符串 x1,y1 x2,y2...
-    #angle 角度
-	def fillGradientPolygon(self, dwFirst, dwSecond, strApt, angle):
-		return self.m_gdiPlus.fillGradientPolygonGdiPlus(self.m_gID, dwFirst, dwSecond, c_char_p(strApt.encode('gbk')), c_int(angle))
-	#绘制渐变矩形
-    #dwFirst 开始颜色
-    #dwSecond 开始颜色
-    #rect 矩形
-    #cornerRadius 边角半径
-    #angle 角度
-	def fillGradientRect(self, dwFirst, dwSecond, left, top, right, bottom, cornerRadius, angle):
-		return self.m_gdiPlus.fillGradientRectGdiPlus(self.m_gID, dwFirst, dwSecond, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius), c_int(angle))
-	#填充路径
-    #dwPenColor 颜色
-	def fillPath(self, dwPenColor):
-		return self.m_gdiPlus.fillPathGdiPlus(self.m_gID, dwPenColor)
-	#绘制扇形
-    #dwPenColor 颜色
-    #rect 矩形区域
-    #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
-    #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
-	def fillPie(self, dwPenColor, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.fillPieGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
-	#填充多边形
-    #dwPenColor 颜色
-    #strApt 点阵字符串 x1,y1 x2,y2...
-	def fillPolygon(self, dwPenColor, strApt):
-		return self.m_gdiPlus.fillPolygonGdiPlus(self.m_gID, dwPenColor, c_char_p(strApt.encode('gbk')))
-	#填充矩形
-    #dwPenColor 颜色
-    #left 左侧坐标
-    #top 顶部左标
-    #right 右侧坐标
-    #bottom 底部坐标
-	def fillRect(self, dwPenColor, left, top, right, bottom):
-		return self.m_gdiPlus.fillRectGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#填充圆角矩形
-    #dwPenColor 颜色
-    #rect 矩形区域
-    #cornerRadius 边角半径
-	def fillRoundRect(self, dwPenColor, left, top, right, bottom, cornerRadius):
-		return self.m_gdiPlus.fillRoundRectGdiPlus(self.m_gID, dwPenColor, c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
-	#设置裁剪区域
-    #rect 区域
-	def setClip(self, left, top, right, bottom):
-		return self.m_gdiPlus.setClipGdiPlus(self.m_gID, c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#设置直线两端的样式
-    #startLineCap 开始的样式
-    #endLineCap  结束的样式
-	def setLineCap(self, startLineCap, endLineCap):
-		return self.m_gdiPlus.setLineCapGdiPlus(self.m_gID, c_int(startLineCap), c_int(endLineCap))
-	#设置偏移
-    #mp 偏移坐标
-	def setOffset(self, offsetX, offsetY):
-		return self.m_gdiPlus.setOffsetGdiPlus(self.m_gID, c_int(offsetX), c_int(offsetY))
-	#设置透明度
-    #opacity 透明度
-	def setOpacity(self, opacity):
-		return self.m_gdiPlus.setOpacityGdiPlus(self.m_gID, c_float(opacity))
-	#设置资源的路径
-    #resourcePath 资源的路径
-	def setResourcePath(self, resourcePath):
-		return self.m_gdiPlus.setResourcePathGdiPlus(self.m_gID, c_char_p(resourcePath.encode('gbk')))
-	#设置旋转角度
-    #rotateAngle 旋转角度
-	def setRotateAngle(self, rotateAngle):
-		return self.m_gdiPlus.setRotateAngleGdiPlus(self.m_gID, c_int(rotateAngle))
-	#设置缩放因子
-    #scaleFactorX 横向因子
-    #scaleFactorY 纵向因子
-	def setScaleFactor(self, scaleFactorX, scaleFactorY):
-		return self.m_gdiPlus.setScaleFactorGdiPlus(self.m_gID, c_double(scaleFactorX), c_double(scaleFactorY))
-	#获取文字大小
-    #text 文字
-    #font 字体
-	#width 字符最大宽度
-	#data 返回数据 create_string_buffer(1024000) cx,cy
-	def textSize(self, strText, font, width, data):
-		return self.m_gdiPlus.textSizeGdiPlus(self.m_gID, c_char_p(strText.encode('gbk')), c_char_p(font.encode('gbk')), c_int(width), data)
-	#消息循环
-	#hWnd 句柄
-	#message 消息ID
-	def onMessage(self, hWnd, message, wParam, lParam):
-		return self.m_gdiPlus.onMessage(self.m_gID, hWnd, message, wParam, lParam)
-	#创建视图
-	#typeStr 类型
-	#name 名称
-	def createView(self, typeStr, name):
-		return self.m_gdiPlus.createView(self.m_gID, c_char_p(typeStr.encode('gbk')), c_char_p(name.encode('gbk')))
-	#设置属性
-	#name 名称
-	#atrName 属性名称
-	#atrValue 属性值
-	def setAttribute(self, name, atrName, atrValue):
-		return self.m_gdiPlus.setAttribute(self.m_gID, c_char_p(name.encode('gbk')), c_char_p(atrName.encode('gbk')), c_char_p(atrValue.encode('gbk')))
-	#获取属性
-	#name 名称
-	#atrName 属性名称
-	#data 返回数据 create_string_buffer(1024000)
-	def getAttribute(self, name, atrName, data):
-		return self.m_gdiPlus.getAttribute(self.m_gID, c_char_p(name.encode('gbk')), c_char_p(atrName.encode('gbk')), data)
-	#获取属性
-	#name 名称
-    #left 左侧坐标
-    #top 顶部左标
-    #right 右侧坐标
-    #bottom 底部坐标
-	def paintView(self, name, left, top, right, bottom):
-		return self.m_gdiPlus.paintView(self.m_gID, c_char_p(name.encode('gbk')), c_int(left), c_int(top), c_int(right), c_int(bottom))
-	#设置焦点
-	#name 名称
-	def focusView(self, name):
-		return self.m_gdiPlus.focusView(self.m_gID, c_char_p(name.encode('gbk')))
-	#设置焦点
-	#name 名称
-	def unFocusView(self, name):
-		return self.m_gdiPlus.unFocusView(self.m_gID, c_char_p(name.encode('gbk')))
-	#鼠标按下视图
-	#name 名称
-	#x 横坐标
-	#y 纵坐标
-	#buttons 按钮
-	#clicks 点击次数
-	def mouseDownView(self, name, x, y, buttons, clicks):
-		return self.m_gdiPlus.mouseDownView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
-	#鼠标抬起视图
-	#name 名称
-	#x 横坐标
-	#y 纵坐标
-	#buttons 按钮
-	#clicks 点击次数
-	def mouseUpView(self, name, x, y, buttons, clicks):
-		return self.m_gdiPlus.mouseUpView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
-	#鼠标移动视图
-	#name 名称
-	#x 横坐标
-	#y 纵坐标
-	#buttons 按钮
-	#clicks 点击次数
-	def mouseMoveView(self, name, x, y, buttons, clicks):
-		return self.m_gdiPlus.mouseMoveView(self.m_gID, c_char_p(name.encode('gbk')), c_int(x), c_int(y), c_int(buttons), c_int(clicks))
-
 #获取视图文本
 #view 视图
 #atrName 属性名称
@@ -6837,7 +6841,7 @@ def getViewAttribute(view, atrName):
 	if(view.m_paint.m_useGdiPlus):
 		recvData = create_string_buffer(102400)
 		view.m_paint.m_gdiPlusPaint.getAttribute(view.m_name, atrName, recvData)
-		viewText = str(recvData.value, encoding="gbk")
+		viewText = str(recvData.value, encoding=view.m_paint.m_gdiPlusPaint.m_encoding)
 	else:
 		viewText = getHWndText(view.m_hWnd)
 	return viewText
@@ -6851,3 +6855,921 @@ def setViewAttribute(view, atrName, text):
 		view.m_paint.m_gdiPlusPaint.setAttribute(view.m_name, atrName, text)
 	else:
 		setHWndText(view.m_hWnd, text)
+
+#日期按钮
+class DayButton(object):
+	def __init__(self):
+		self.m_bounds = FCRect(0,0,0,0) #显示区域
+		self.m_calendar = None #日历视图
+		self.m_day = None #日
+		self.m_inThisMonth = FALSE #是否在本月
+		self.m_visible = TRUE #是否可见
+		self.m_selected = FALSE #是否被选中
+		self.m_font = "16px Arial" #字体
+		self.m_textColor = "rgb(255,255,255)" #文字颜色
+		self.m_backColor = "none" #背景颜色
+		self.m_textColor2 = "rgb(200,200,200)" #第二个文字颜色
+		self.m_borderColor = "rgb(100,100,100)" #文字颜色 
+
+#月的按钮
+class MonthButton(object):
+	def __init__(self):
+		self.m_bounds = FCRect(0,0,0,0) #显示区域
+		self.m_calendar = None #日历视图
+		self.m_month = 0 #月
+		self.m_year = 0 #年
+		self.m_visible = TRUE #是否可见
+		self.m_textColor = "rgb(255,255,255)" #文字颜色
+		self.m_backColor = "none" #背景颜色
+		self.m_font = "16px Arial" #字体
+		self.m_borderColor = "rgb(100,100,100)" #文字颜色 
+
+#年的按钮
+class YearButton(object):
+	def __init__(self):
+		self.m_bounds = FCRect(0,0,0,0) #显示区域
+		self.m_calendar = None #日历视图
+		self.m_year = 0 #年
+		self.m_visible = TRUE #是否可见
+		self.m_textColor = "rgb(255,255,255)" #文字颜色
+		self.m_backColor = "none" #背景颜色
+		self.m_font = "16px Arial" #字体
+		self.m_borderColor = "rgb(100,100,100)" #文字颜色 
+
+#日期层
+class DayDiv(object):
+	def __init__(self):
+		self.m_am_ClickRowFrom = 0 #点击时的上月的行
+		self.m_am_ClickRowTo = 0 #点击时的当月的行
+		self.m_am_Direction = 0 #动画的方向
+		self.m_am_Tick = 0 #动画当前帧数
+		self.m_am_TotalTick = 40 #动画总帧数
+		self.m_calendar = None #日历视图
+		self.m_dayButtons = [] #日期的集合
+		self.m_dayButtons_am = []  #动画日期的集合
+
+#月层
+class MonthDiv(object):
+	def __init__(self):
+		self.m_am_Direction = 0 #动画的方向
+		self.m_am_Tick = 0 #动画当前帧数
+		self.m_am_TotalTick = 40 #动画总帧数
+		self.m_calendar = None #日历视图
+		self.m_year = 0 #年份
+		self.m_monthButtons = [] #月的按钮
+		self.m_monthButtons_am = [] #月的动画按钮
+
+#年层
+class YearDiv(object):
+	def __init__(self):
+		self.m_am_Direction = 0 #动画的方向
+		self.m_am_Tick = 0 #动画当前帧数
+		self.m_am_TotalTick = 40 #动画总帧数
+		self.m_calendar = None #日历视图
+		self.m_startYear = 0 #开始年份
+		self.m_yearButtons = [] #月的按钮
+		self.m_yearButtons_am = [] #月的动画按钮
+
+#年层
+class HeadDiv(object):
+	def __init__(self):
+		self.m_calendar = None #日历视图
+		self.m_bounds = FCRect(0,0,0,0) #显示区域
+		self.m_titleFont = "20px Arial" #标题字体
+		self.m_weekFont = "14px Arial" #星期字体
+		self.m_arrowColor = "rgb(100,100,100)" #箭头颜色
+		self.m_backColor = "rgb(0,0,0)" #箭头颜色
+		self.m_textColor = "rgb(255,255,255)" #文字颜色
+
+#时间层
+class TimeDiv(object):
+	def __init__(self):
+		self.m_calendar = None #日历视图
+		self.m_bounds = FCRect(0,0,0,0) #显示区域
+
+#年的结构
+class CYear(object):
+	def __init__(self):
+		self.m_year = 0 #年
+		self.m_months = dict() #月的集合
+
+#月的结构
+class CMonth(object):
+	def __init__(self):
+		self.m_month = 0 #月
+		self.m_year = 0 #年
+		self.m_days = dict() #日的集合
+
+#日的结构
+class CDay(object):
+	def __init__(self):
+		self.m_day = 0 #日
+		self.m_month = 0 #月
+		self.m_year = 0 #年
+
+#多页夹
+class FCCalendar(FCView):
+	def __init__(self):
+		super().__init__()
+		self.m_type = "calendar" #类型
+		self.m_useAnimation = FALSE #是否使用动画
+		self.m_dayDiv = DayDiv() #日层
+		self.m_headDiv = HeadDiv() #头部层
+		self.m_monthDiv = MonthDiv() #月层
+		self.m_yearDiv = YearDiv() #年层
+		self.m_years = dict() #日历
+		self.m_timeDiv = TimeDiv() #时间层
+		self.m_selectedDay = None #选中日
+		self.m_mode = "day" #模式
+		self.m_visible = TRUE #是否可见
+
+#获取月的日数
+#year:年
+#month:月
+def getDaysInMonth(year, month):
+	if(month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12):
+		return 31
+	elif(month == 4 or month == 6 or month == 9 or month == 11):
+		return 30
+	else:
+		if ((year % 4 == 0 and year % 100 != 0) or year % 400 == 0):
+				return 29
+		else:
+			return 28
+
+#根据字符获取月份
+#month:月
+def getMonthStr(month):
+	if month == 1:
+		return "一月"
+	elif month == 2:
+		return "二月"
+	elif month == 3:
+		return "三月"
+	elif month == 4:
+		return "四月"
+	elif month == 5:
+		return "五月"
+	elif month == 6:
+		return "六月"
+	elif month == 7:
+		return "七月"
+	elif month == 8:
+		return "八月"
+	elif month == 9:
+		return "九月"
+	elif month == 10:
+		return "十月"
+	elif month == 11:
+		return "十一月"
+	elif month == 12:
+		return "十二月"
+	else:
+		return ""
+
+#获取年
+#years:年的集合
+#year:年
+def getYear(years, year):
+	cy = None
+	if ((year in years) == FALSE):
+		cy = CYear()
+		cy.m_year = year
+		years[year] = cy
+		for i in range(1,13):
+			cMonth = CMonth()
+			cMonth.m_year = year
+			cMonth.m_month = i
+			cy.m_months[i] = cMonth
+			daysInMonth = getDaysInMonth(year, i)
+			for j in range(1,daysInMonth + 1):
+				cDay = CDay()
+				cDay.m_year = year
+				cDay.m_month = i
+				cDay.m_day = j
+				cMonth.m_days[j] = cDay
+	else:
+		cy = years[year]
+	return cy
+
+#显示隐藏日期层
+#dayDiv:日期层
+#visible:是否可见
+def showOrHideDayDiv(dayDiv, visible):
+	dayButtonSize = len(dayDiv.m_dayButtons)
+	for i in range(0, dayButtonSize):
+		dayButton = dayDiv.m_dayButtons[i]
+		dayButton.m_visible = visible
+
+#显示隐藏月层
+#monthDiv:月层
+#visible:是否可见
+def showOrHideMonthDiv(monthDiv, visible):
+	monthButtonSize = len(monthDiv.m_monthButtons)
+	for i in range(0, monthButtonSize):
+		monthButton = monthDiv.m_monthButtons[i]
+		monthButton.m_visible = visible
+
+#显示隐藏年层
+#m_yearButtons:年层
+#visible:是否可见
+def showOrHideYearDiv(yearDiv, visible):
+	yearButtonSize = len(yearDiv.m_yearButtons)
+	for i in range(0,yearButtonSize):
+		yearButton = yearDiv.m_yearButtons[i]
+		yearButton.m_visible = visible
+
+#初始化日历
+#calendar:日历
+def initCalendar(calendar):
+	calendar.m_dayDiv.m_calendar = calendar
+	calendar.m_monthDiv.m_calendar = calendar
+	calendar.m_yearDiv.m_calendar = calendar
+	for i in range(0,42):
+		dayButton = DayButton()
+		dayButton.m_calendar = calendar
+		calendar.m_dayDiv.m_dayButtons.append(dayButton)
+		dayFCButtonm = DayButton()
+		dayFCButtonm.m_calendar = calendar
+		dayFCButtonm.m_visible = FALSE
+		calendar.m_dayDiv.m_dayButtons_am.append(dayFCButtonm)
+	for i in range(0,12):
+		monthButton = MonthButton()
+		monthButton.m_calendar = calendar
+		monthButton.m_month = (i + 1)
+		calendar.m_monthDiv.m_monthButtons.append(monthButton)
+		monthButtonAm = MonthButton()
+		monthButtonAm.m_calendar = calendar
+		monthButtonAm.m_visible = FALSE
+		monthButtonAm.m_month = (i + 1)
+		calendar.m_monthDiv.m_monthButtons_am.append(monthButtonAm)
+
+	for i in range(0,12):
+		yearButton = YearButton()
+		yearButton.m_calendar = calendar
+		calendar.m_yearDiv.m_yearButtons.append(yearButton)
+		yearButtonAm = YearButton()
+		yearButtonAm.m_calendar = calendar;
+		yearButtonAm.m_visible = FALSE;
+		calendar.m_yearDiv.m_yearButtons_am.append(yearButtonAm)
+	calendar.m_headDiv.m_calendar = calendar
+	calendar.m_timeDiv.m_calendar = calendar
+
+#获取星期
+#y:年
+#m:月
+#d:日
+def dayOfWeek(y, m, d):
+	if (m == 1 or m == 2):
+		m += 12
+		y = y - 1
+	return int(((d + 2 * m + 3 * (m + 1) / 5 + y + y / 4 - y / 100 + y / 400) + 1) % 7)
+
+#获取当月
+#calendar:日历
+def getMonth(calendar):
+	return getYear(calendar.m_years, calendar.m_selectedDay.m_year).m_months.get(calendar.m_selectedDay.m_month)
+
+#获取下个月
+#calendar:日历
+#year:年
+#month:月
+def getNextMonth(calendar, year, month):
+	nextMonth = month + 1
+	nextYear = year
+	if (nextMonth == 13):
+		nextMonth = 1
+		nextYear += 1
+	return getYear(calendar.m_years, nextYear).m_months.get(nextMonth)
+
+#获取上个月
+#calendar:日历
+#year:年
+#month:月
+def getLastMonth(calendar, year, month):
+	lastMonth = month - 1
+	lastYear = year
+	if (lastMonth == 0):
+		lastMonth = 12
+		lastYear -= 1
+	return getYear(calendar.m_years, lastYear).m_months.get(lastMonth)
+
+#重置日期层布局
+#dayDiv:日期层
+#state:状态
+def resetDayDiv(dayDiv, state):
+	calendar = dayDiv.m_calendar
+	thisMonth = getMonth(calendar)
+	lastMonth = getLastMonth(calendar, thisMonth.m_year, thisMonth.m_month)
+	nextMonth = getNextMonth(calendar, thisMonth.m_year, thisMonth.m_month)
+	left = 0
+	headHeight = calendar.m_headDiv.m_bounds.bottom
+	top = headHeight
+	width = calendar.m_size.cx
+	height = calendar.m_size.cy
+	height -= calendar.m_timeDiv.m_bounds.bottom - calendar.m_timeDiv.m_bounds.top
+	dayButtonHeight = height - headHeight
+	if (dayButtonHeight < 1):
+		dayButtonHeight = 1
+	toY = 0
+	if (dayDiv.m_am_Direction == 1):
+		toY = dayButtonHeight * dayDiv.m_am_Tick / dayDiv.m_am_TotalTick
+		if (state == 1):
+			thisMonth = nextMonth
+			month = thisMonth.m_month
+			lastMonth = getLastMonth(calendar, thisMonth.m_year, month)
+			nextMonth = getNextMonth(calendar, thisMonth.m_year, month)
+	elif (dayDiv.m_am_Direction == 2):
+		toY = -dayButtonHeight * dayDiv.m_am_Tick / dayDiv.m_am_TotalTick
+		if (state == 1):
+			thisMonth = lastMonth
+			month = thisMonth.m_month
+			lastMonth = getLastMonth(calendar, thisMonth.m_year, month)
+			nextMonth = getNextMonth(calendar, thisMonth.m_year, month)
+	buttonSize = 0
+	if (state == 0):
+		buttonSize = len(dayDiv.m_dayButtons)
+	elif (state == 1):
+		buttonSize = len(dayDiv.m_dayButtons_am)
+	dheight = dayButtonHeight / 6
+	days = thisMonth.m_days
+	firstDay = days[1]
+	startDayOfWeek = dayOfWeek(firstDay.m_year, firstDay.m_month, firstDay.m_day)
+	for i in range(0, buttonSize):
+		dayButton = None
+		if (state == 0):
+			dayButton = dayDiv.m_dayButtons[i]
+			buttonSize = len(dayDiv.m_dayButtons)
+		elif(state == 1):
+			dayButton = dayDiv.m_dayButtons_am[i]
+			buttonSize = len(dayDiv.m_dayButtons_am)
+		if (i == 35):
+			dheight = height - top
+		vOffset = 0
+		if (state == 1):
+			if (dayDiv.m_am_Tick > 0):
+				dayButton.m_visible = TRUE
+				if (dayDiv.m_am_Direction == 1):
+					vOffset = toY - dayButtonHeight
+				elif(dayDiv.m_am_Direction == 2):
+					vOffset = toY + dayButtonHeight
+			else:
+				dayButton.m_visible = FALSE
+				continue
+		else:
+			vOffset = toY
+		if ((i + 1) % 7 == 0):
+			dp = FCPoint(left, top + vOffset)
+			ds = FCSize(width - left, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			dayButton.m_bounds = bounds
+			left = 0
+			if (i != 0 and i != buttonSize - 1):
+				top += dheight
+		else:
+			dp = FCPoint(left, top + vOffset)
+			ds = FCSize(width / 7 + ((i + 1) % 7) % 2, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			dayButton.m_bounds = bounds
+			left += ds.cx
+		cDay = None
+		dayButton.m_inThisMonth = FALSE
+		if (i >= startDayOfWeek and i <= startDayOfWeek + len(days) - 1):
+			cDay = days[i - startDayOfWeek + 1]
+			dayButton.m_inThisMonth = TRUE
+		elif (i < startDayOfWeek):
+			cDay = lastMonth.m_days.get(len(lastMonth.m_days) - startDayOfWeek + i + 1)
+		elif (i > startDayOfWeek + len(days) - 1):
+			cDay = nextMonth.m_days.get(i - startDayOfWeek - len(days) + 1)
+		dayButton.m_day = cDay
+		if (state == 0 and dayButton.m_day and dayButton.m_day == calendar.m_selectedDay):
+			dayButton.m_selected = TRUE
+		else:
+			dayButton.m_selected = FALSE
+
+#重置月层布局
+#monthDiv:月层
+#state:状态
+def resetMonthDiv(monthDiv, state):
+	calendar = monthDiv.m_calendar
+	thisYear = monthDiv.m_year
+	lastYear = monthDiv.m_year - 1
+	nextYear = monthDiv.m_year + 1
+	left = 0
+	headHeight = calendar.m_headDiv.m_bounds.bottom
+	top = headHeight
+	width = calendar.m_size.cx
+	height = calendar.m_size.cy
+	height -= calendar.m_timeDiv.m_bounds.bottom - calendar.m_timeDiv.m_bounds.top
+	monthButtonHeight = height - top
+	if (monthButtonHeight < 1):
+		monthButtonHeight = 1
+	toY = 0
+	monthButtons = None
+	if (monthDiv.m_am_Direction == 1):
+		toY = monthButtonHeight * monthDiv.m_am_Tick / monthDiv.m_am_TotalTick
+		if (state == 1):
+			thisYear = nextYear
+			lastYear = thisYear - 1
+			nextYear = thisYear + 1
+	elif (monthDiv.m_am_Direction == 2):
+		toY = -monthButtonHeight * monthDiv.m_am_Tick / monthDiv.m_am_TotalTick
+		if (state == 1):
+			thisYear = lastYear
+			lastYear = thisYear - 1
+			nextYear = thisYear + 1
+	if (state == 0):
+		monthButtons = monthDiv.m_monthButtons
+	elif (state == 1):
+		monthButtons = monthDiv.m_monthButtons_am
+	dheight = monthButtonHeight / 3
+	buttonSize = len(monthButtons)
+	for i in range(0, buttonSize):
+		if (i == 8):
+			dheight = height - top
+		monthButton = monthButtons[i]
+		monthButton.m_year = thisYear
+		vOffSet = 0
+		if (state == 1):
+			if (monthDiv.m_am_Tick > 0):
+				monthButton.m_visible = TRUE
+				if (monthDiv.m_am_Direction == 1):
+					vOffSet = toY - monthButtonHeight
+				elif (monthDiv.m_am_Direction == 2):
+					vOffSet = toY + monthButtonHeight
+			else:
+				monthButton.m_visible = FALSE
+				continue
+		else:
+			vOffSet = toY
+		if ((i + 1) % 4 == 0):
+			dp = FCPoint(left, top + vOffSet)
+			ds = FCSize(width - left, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			monthButton.m_bounds = bounds
+			left = 0
+			if (i != 0 and i != buttonSize - 1):
+				top += dheight
+		else:
+			dp = FCPoint(left, top + vOffSet)
+			ds = FCSize( width / 4 + ((i + 1) % 4) % 2, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			monthButton.m_bounds = bounds
+			left += ds.cx
+
+#重置年层布局
+#yearDiv:年层
+#state:状态
+def resetYearDiv(yearDiv, state):
+	calendar = yearDiv.m_calendar
+	thisStartYear = yearDiv.m_startYear
+	lastStartYear = yearDiv.m_startYear - 12
+	nextStartYear = yearDiv.m_startYear + 12
+	left = 0
+	headHeight = calendar.m_headDiv.m_bounds.bottom
+	top = headHeight
+	width = calendar.m_size.cx
+	height = calendar.m_size.cy
+	height -= calendar.m_timeDiv.m_bounds.bottom - calendar.m_timeDiv.m_bounds.top
+	yearButtonHeight = height - top
+	if (yearButtonHeight < 1):
+		yearButtonHeight = 1
+	toY = 0
+	yearButtons = None
+	if (yearDiv.m_am_Direction == 1):
+		toY = yearButtonHeight * yearDiv.m_am_Tick / yearDiv.m_am_TotalTick
+		if (state == 1):
+			thisStartYear = nextStartYear
+			lastStartYear = thisStartYear - 12
+			nextStartYear = thisStartYear + 12
+	elif (yearDiv.m_am_Direction == 2):
+		toY = -yearButtonHeight * yearDiv.m_am_Tick / yearDiv.m_am_TotalTick
+		if (state == 1):
+			thisStartYear = lastStartYear
+			lastStartYear = thisStartYear - 12
+			nextStartYear = thisStartYear + 12
+	if (state == 0):
+		yearButtons = yearDiv.m_yearButtons
+	elif (state == 1):
+		yearButtons = yearDiv.m_yearButtons_am
+	dheight = yearButtonHeight / 3
+	buttonSize = len(yearDiv.m_yearButtons)
+	for i in range(0, buttonSize):
+		if (i == 8):
+			dheight = height - top
+		yearButton = yearButtons[i]
+		yearButton.m_year = thisStartYear + i
+		vOffSet = 0
+		if (state == 1):
+			if (yearDiv.m_am_Tick > 0):
+				yearButton.m_visible = TRUE
+				if (yearDiv.m_am_Direction == 1):
+					vOffSet = toY - yearButtonHeight
+				elif(yearDiv.m_am_Direction == 2):
+					vOffSet = toY + yearButtonHeight
+			else:
+				yearButton.m_visible = FALSE
+				continue
+		else:
+			vOffSet = toY
+		if ((i + 1) % 4 == 0):
+			dp = FCPoint(left, top + vOffSet)
+			ds = FCSize(width - left, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			yearButton.m_bounds = bounds
+			left = 0
+			if (i != 0 and i != buttonSize - 1):
+				top += dheight
+		else:
+			dp = FCPoint(left, top + vOffSet)
+			ds = FCSize(width / 4 + ((i + 1) % 4) % 2, dheight)
+			bounds = FCRect(dp.x, dp.y, dp.x + ds.cx, dp.y + ds.cy)
+			yearButton.m_bounds = bounds
+			left += ds.cx
+
+#选择开始年份
+#yearDiv:年层
+#startYear:开始年
+def selectStartYear(yearDiv, startYear):
+	if (yearDiv.m_startYear != startYear):
+		if (startYear > yearDiv.m_startYear):
+			yearDiv.m_am_Direction = 1
+		else:
+			yearDiv.m_am_Direction = 2
+		if (yearDiv.m_calendar.m_useAnimation):
+			yearDiv.m_am_Tick = yearDiv.m_am_TotalTick
+		yearDiv.m_startYear = startYear
+
+#选择年份
+#monthDiv:月层
+#year:年
+def selectYear(monthDiv, year):
+	if (monthDiv.m_year != year):
+		if (year > monthDiv.m_year):
+			monthDiv.m_am_Direction = 1
+		else:
+			monthDiv.m_am_Direction = 2
+		if (monthDiv.m_calendar.m_useAnimation):
+			monthDiv.m_am_Tick = monthDiv.m_am_TotalTick
+		monthDiv.m_year = year
+
+#选中日期
+#dayDiv:日期层
+#selectedDay:选中日
+#lastDay:上一日
+def selectDay(dayDiv, selectedDay, lastDay):
+	calendar = dayDiv.m_calendar
+	m = getYear(calendar.m_years, selectedDay.m_year).m_months.get(selectedDay.m_month)
+	thisMonth = getYear(calendar.m_years, lastDay.m_year).m_months.get(lastDay.m_month)
+	if (m != thisMonth):
+		if (thisMonth.m_year * 12 + thisMonth.m_month > m.m_year * 12 + m.m_month):
+			dayDiv.m_am_Direction = 2
+		else:
+			dayDiv.m_am_Direction = 1
+		i = 0
+		buttonSize = len(dayDiv.m_dayButtons)
+		for i in range(0, buttonSize):
+			dayButton = dayDiv.m_dayButtons[i]
+			if ((dayDiv.m_am_Direction == 1 and dayButton.m_day == thisMonth.m_days.get(0)) or (dayDiv.m_am_Direction == 2 and dayButton.m_day == thisMonth.m_days.get(len(thisMonth.m_days) - 1))):
+				dayDiv.m_am_ClickRowFrom = i / 7
+				if (i % 7 != 0):
+					dayDiv.m_am_ClickRowFrom += 1
+		resetDayDiv(dayDiv, 0)
+		buttonSize = len(dayDiv.m_dayButtons_am)
+		for i in range(0, buttonSize):
+			dayFCButtonm = dayDiv.m_dayButtons_am[i]
+			if ((dayDiv.m_am_Direction == 1 and dayFCButtonm.m_day == m.m_days.get(0)) or (dayDiv.m_am_Direction == 2 and dayFCButtonm.m_day == m.m_days.get(len(m.m_days) - 1))):
+				dayDiv.m_am_ClickRowTo = i / 7
+				if (i % 7 != 0):
+					dayDiv.m_am_ClickRowTo += 1
+		if (calendar.m_useAnimation):
+			dayDiv.m_am_Tick = dayDiv.m_am_TotalTick
+	else:
+		dayButtonsSize = len(dayDiv.m_dayButtons)
+		for i in range(0, dayButtonsSize):
+			dayButton = dayDiv.m_dayButtons[i]
+			if (dayButton.m_day != selectedDay):
+				dayButton.m_selected = FALSE
+
+#日历的秒表
+#calendar:日历
+def calendarTimer(calendar):
+	paint = FALSE
+	if (calendar.m_dayDiv.m_am_Tick > 0):
+		calendar.m_dayDiv.m_am_Tick = int(calendar.m_dayDiv.m_am_Tick * 2 / 3)
+		paint = TRUE
+	if (calendar.m_monthDiv.m_am_Tick > 0):
+		calendar.m_monthDiv.m_am_Tick = int(calendar.m_monthDiv.m_am_Tick * 2 / 3)
+		paint = TRUE
+	if (calendar.m_yearDiv.m_am_Tick > 0):
+		calendar.m_yearDiv.m_am_Tick = int(calendar.m_yearDiv.m_am_Tick * 2 / 3)
+		paint = TRUE
+	if (paint):
+		updateCalendar(calendar)
+		if(calendar.m_paint):
+			invalidateView(calendar, calendar.m_paint)
+
+#更新日历的布局
+#calendar:日历
+def updateCalendar(calendar):
+	calendar.m_headDiv.m_bounds = FCRect(0, 0, calendar.m_size.cx, 80)
+	if (calendar.m_mode == "day"):
+		resetDayDiv(calendar.m_dayDiv, 0)
+		resetDayDiv(calendar.m_dayDiv, 1)
+	elif (calendar.m_mode == "month"):
+		resetMonthDiv(calendar.m_monthDiv, 0)
+		resetMonthDiv(calendar.m_monthDiv, 1)
+	elif (calendar.m_mode == "year"):
+		resetYearDiv(calendar.m_yearDiv, 0)
+		resetYearDiv(calendar.m_yearDiv, 1)
+
+#绘制头部层
+#headDiv:头部层
+#paint:绘图对象
+def drawHeadDiv(headDiv, paint):
+	calendar = headDiv.m_calendar
+	bounds = headDiv.m_bounds
+	if (headDiv.m_backColor != "none"):
+		paint.fillRect(headDiv.m_backColor, bounds.left, bounds.top, bounds.right, bounds.bottom)
+	m_weekStrings = []
+	m_weekStrings.append("周日")
+	m_weekStrings.append("周一")
+	m_weekStrings.append("周二")
+	m_weekStrings.append("周三")
+	m_weekStrings.append("周四")
+	m_weekStrings.append("周五")
+	m_weekStrings.append("周六")
+	w = bounds.right - bounds.left
+	left = bounds.left
+	for i in range(0, 7):
+		weekDaySize = paint.textSize(m_weekStrings[i], headDiv.m_weekFont)
+		textX = left + (w / 7) / 2 - weekDaySize.cx / 2
+		textY = bounds.bottom - weekDaySize.cy - 2
+		paint.drawText(m_weekStrings[i], headDiv.m_textColor, headDiv.m_weekFont, textX, textY)
+		left += w / 7
+	drawTitle = ""
+	if (calendar.m_mode == "day"):
+		drawTitle = str(calendar.m_selectedDay.m_year) + "年" + str(calendar.m_selectedDay.m_month) + "月"
+	elif (calendar.m_mode == "month"):
+		drawTitle = str(calendar.m_monthDiv.m_year) + "年"
+	else:
+		drawTitle = str(calendar.m_yearDiv.m_startYear) + "年-" + str(calendar.m_yearDiv.m_startYear + 11) + "年"
+	tSize = paint.textSize(drawTitle, headDiv.m_titleFont)
+	paint.drawText(drawTitle, headDiv.m_textColor, headDiv.m_titleFont, bounds.left + (w - tSize.cx) / 2, 30)
+	tR = 10
+	#画左右三角
+	drawPoints = []
+	drawPoints.append((5, bounds.top + (bounds.bottom - bounds.top) / 2))
+	drawPoints.append((5 + tR * 2, bounds.top + (bounds.bottom - bounds.top) / 2 - tR))
+	drawPoints.append((5 + tR * 2, bounds.top + (bounds.bottom - bounds.top) / 2 + tR))
+	paint.fillPolygon(headDiv.m_arrowColor, drawPoints)
+	drawPoints = []
+	drawPoints.append((bounds.right - 5, bounds.top + (bounds.bottom - bounds.top) / 2))
+	drawPoints.append((bounds.right - 5 - tR * 2, bounds.top + (bounds.bottom - bounds.top) / 2 - tR))
+	drawPoints.append((bounds.right - 5 - tR * 2, bounds.top + (bounds.bottom - bounds.top) / 2 + tR))
+	paint.fillPolygon(headDiv.m_arrowColor, drawPoints)
+
+#绘制日的按钮
+#dayButton:日期按钮
+#paint:绘图对象
+def drawDayButton(dayButton, paint):
+	if (dayButton.m_day != None):
+		calendar = dayButton.m_calendar
+		bounds = dayButton.m_bounds
+		text = str(dayButton.m_day.m_day)
+		tSize = paint.textSize(text, dayButton.m_font)
+		if(dayButton.m_backColor != "none"):
+			paint.fillRect(dayButton.m_backColor, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+		if(dayButton.m_inThisMonth):
+			paint.drawText(text, dayButton.m_textColor, dayButton.m_font, bounds.left + 5, bounds.top + 7)
+		else:
+			paint.drawText(text, dayButton.m_textColor2, dayButton.m_font, bounds.left + 5, bounds.top + 7)
+		if(dayButton.m_borderColor != "none"):
+			paint.drawRect(dayButton.m_borderColor, 1, 0, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+
+#绘制月的按钮
+#monthButton:月按钮
+#paint:绘图对象
+def drawMonthButton(monthButton, paint):
+    calendar = monthButton.m_calendar
+    bounds = monthButton.m_bounds
+    text = getMonthStr(monthButton.m_month)
+    tSize = paint.textSize(text, monthButton.m_font)
+    if(monthButton.m_backColor != "none"):
+        paint.fillRect(monthButton.m_backColor, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+    paint.drawText(text, monthButton.m_textColor, monthButton.m_font, bounds.left + 5, bounds.top + 7)
+    if(monthButton.m_borderColor != "none"):
+        paint.drawRect(monthButton.m_borderColor, 1, 0, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+
+#绘制年的按钮
+#yearButton:年按钮
+#paint:绘图对象
+def drawYearButton(yearButton, paint):
+    calendar = yearButton.m_calendar
+    bounds = yearButton.m_bounds
+    text = str(yearButton.m_year)
+    tSize = paint.textSize(text, yearButton.m_font)
+    if(yearButton.m_backColor != "none"):
+        paint.fillRect(yearButton.m_backColor, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+    paint.drawText(text, yearButton.m_textColor, yearButton.m_font, bounds.left + 5, bounds.top + 7)
+    if(yearButton.m_borderColor != "none"):
+        paint.drawRect(yearButton.m_borderColor, 1, 0, bounds.left + 2, bounds.top + 2, bounds.right - 2, bounds.bottom - 2)
+
+#绘制日历
+#calendar:日历
+#paint:绘图对象
+def drawCalendar(calendar, paint):
+	if (calendar.m_backColor != "none"):
+		paint.fillRect(calendar.m_backColor, 0, 0, calendar.m_size.cx, calendar.m_size.cy)
+	if (calendar.m_mode == "day"):
+		dayButtonsSize = len(calendar.m_dayDiv.m_dayButtons)
+		for i in range(0,dayButtonsSize):
+			dayButton = calendar.m_dayDiv.m_dayButtons[i]
+			if (dayButton.m_visible):
+			    drawDayButton(dayButton, paint)
+		dayFCButtonmSize = len(calendar.m_dayDiv.m_dayButtons_am)
+		for i in range(0,dayFCButtonmSize):
+			dayButton = calendar.m_dayDiv.m_dayButtons_am[i]
+			if (dayButton.m_visible):
+				drawDayButton(dayButton, paint)
+	elif (calendar.m_mode == "month"):
+		monthButtonsSize = len(calendar.m_monthDiv.m_monthButtons)
+		for i in range(0,monthButtonsSize):
+			monthButton = calendar.m_monthDiv.m_monthButtons[i]
+			if (monthButton.m_visible):
+			    drawMonthButton(monthButton, paint)
+		monthFCButtonmSize = len(calendar.m_monthDiv.m_monthButtons_am)
+		for i in range(0,monthFCButtonmSize):
+			monthButton = calendar.m_monthDiv.m_monthButtons_am[i]
+			if (monthButton.m_visible):
+				drawMonthButton(monthButton, paint)
+	elif (calendar.m_mode == "year"):
+		yearButtonsSize = len(calendar.m_yearDiv.m_yearButtons)
+		for i in range(0,yearButtonsSize):
+			yearButton = calendar.m_yearDiv.m_yearButtons[i]
+			if (yearButton.m_visible):
+			    drawYearButton(yearButton, paint)
+		yearFCButtonmSize = len(calendar.m_yearDiv.m_yearButtons_am)
+		for i in range(0,yearFCButtonmSize):
+			yearButton = calendar.m_yearDiv.m_yearButtons_am[i]
+			if (yearButton.m_visible):
+			    drawYearButton(yearButton, paint)
+	drawHeadDiv(calendar.m_headDiv, paint)
+	if (calendar.m_borderColor != "none"):
+		paint.drawRect(calendar.m_borderColor, 1, 0, 0, 0, calendar.m_size.cx, calendar.m_size.cy)
+
+#点击日的按钮
+#mp:坐标
+#dayButton:日期按钮
+def clickDayButton(mp, dayButton):
+	calendar = dayButton.m_calendar
+	lastDay = calendar.m_selectedDay
+	calendar.m_selectedDay = dayButton.m_day
+	selectDay(calendar.m_dayDiv, calendar.m_selectedDay, lastDay)
+	updateCalendar(calendar)
+	if(calendar.m_paint != None):
+	    invalidateView(calendar, calendar.m_paint)
+
+#点击月的按钮
+#mp:坐标
+#monthButton:月按钮
+def clickMonthButton(mp, monthButton):
+	calendar = monthButton.m_calendar
+	month = getYear(calendar.m_years, monthButton.m_year).m_months[monthButton.m_month]
+	calendar.m_mode = "day"
+	lastDay = calendar.m_selectedDay
+	calendar.m_selectedDay = month.m_days[1]
+	selectDay(calendar.m_dayDiv, calendar.m_selectedDay, lastDay)
+	updateCalendar(calendar)
+	if(calendar.m_paint != None):
+	    invalidateView(calendar, calendar.m_paint)
+
+#点击年的按钮
+#mp:坐标
+#yearButton:年按钮
+def clickYearButton(mp, yearButton):
+	calendar = yearButton.m_calendar
+	calendar.m_mode = "month"
+	selectYear(calendar.m_monthDiv, yearButton.m_year)
+	updateCalendar(calendar)
+	if(calendar.m_paint != None):
+	    invalidateView(calendar, calendar.m_paint)
+
+#点击左侧的按钮
+#mp:坐标
+#headDiv:头部层
+def clickLastButton(mp, headDiv):
+	calendar = headDiv.m_calendar
+	if (calendar.m_mode == "day"):
+		lastMonth = getLastMonth(calendar, calendar.m_selectedDay.m_year, calendar.m_selectedDay.m_month)
+		lastDay = calendar.m_selectedDay
+		calendar.m_selectedDay = lastMonth.m_days.get(1)
+		selectDay(calendar.m_dayDiv, calendar.m_selectedDay, lastDay)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+	elif (calendar.m_mode == "month"):
+		year = calendar.m_monthDiv.m_year
+		year -= 1;
+		selectYear(calendar.m_monthDiv, year)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+	elif (calendar.m_mode == "year"):
+		year = calendar.m_yearDiv.m_startYear
+		year -= 12
+		selectStartYear(calendar.m_yearDiv, year)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+
+#点击右侧的按钮
+#mp:坐标
+#headDiv:头部层
+def clickNextButton(mp, headDiv):
+	calendar = headDiv.m_calendar
+	if (calendar.m_mode == "day"):
+		nextMonth = getNextMonth(calendar, calendar.m_selectedDay.m_year, calendar.m_selectedDay.m_month)
+		lastDay = calendar.m_selectedDay
+		calendar.m_selectedDay = nextMonth.m_days.get(1)
+		selectDay(calendar.m_dayDiv, calendar.m_selectedDay, lastDay)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+	elif (calendar.m_mode == "month"):
+		year = calendar.m_monthDiv.m_year
+		year += 1;
+		selectYear(calendar.m_monthDiv, year)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+	elif(calendar.m_mode == "year"):
+		year = calendar.m_yearDiv.m_startYear
+		year += 12
+		selectStartYear(calendar.m_yearDiv, year)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+
+#改变模式的按钮
+#mp:坐标
+#headDiv:头部层
+def clickModeButton(mp, headDiv):
+	calendar = headDiv.m_calendar
+	if (calendar.m_mode == "day"):
+		calendar.m_mode = "month"
+		calendar.m_monthDiv.m_month = calendar.m_selectedDay.m_month
+		calendar.m_monthDiv.m_year = calendar.m_selectedDay.m_year
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+	elif (calendar.m_mode == "month"):
+		calendar.m_mode = "year"
+		selectStartYear(calendar.m_yearDiv, calendar.m_monthDiv.m_year)
+		updateCalendar(calendar)
+		if(calendar.m_paint != None):
+		    invalidateView(calendar, calendar.m_paint)
+
+#点击日历
+#mp:坐标
+#calendar:日历
+def clickCalendar(mp, calendar):
+	headBounds = calendar.m_headDiv.m_bounds
+	if (mp.x >= headBounds.left and mp.x <= headBounds.right and mp.y >= headBounds.top and mp.y <= headBounds.bottom):
+		tR = 10
+		if (mp.x < headBounds.left + tR * 3):
+			clickLastButton(mp, calendar.m_headDiv)
+			return;
+		elif (mp.x > headBounds.right - tR * 3):
+			clickNextButton(mp, calendar.m_headDiv)
+			return
+		else:
+			clickModeButton(mp, calendar.m_headDiv)
+			return
+	if (calendar.m_mode == "day"):
+		dayButtonsSize = len(calendar.m_dayDiv.m_dayButtons)
+		for i in range(0,dayButtonsSize):
+			dayButton = calendar.m_dayDiv.m_dayButtons[i]
+			if (dayButton.m_visible):
+				bounds = dayButton.m_bounds
+				if (mp.x >= bounds.left and mp.x <= bounds.right and mp.y >= bounds.top and mp.y <= bounds.bottom):
+					clickDayButton(mp, dayButton)
+					return
+	elif (calendar.m_mode == "month"):
+		monthButtonsSize = len(calendar.m_monthDiv.m_monthButtons)
+		for i in range(0,monthButtonsSize):
+			monthButton = calendar.m_monthDiv.m_monthButtons[i]
+			if (monthButton.m_visible):
+				bounds = monthButton.m_bounds
+				if (mp.x >= bounds.left and mp.x <= bounds.right and mp.y >= bounds.top and mp.y <= bounds.bottom):
+					clickMonthButton(mp, monthButton)
+					return
+	elif (calendar.m_mode == "year"):
+		yearButtonsSize = len(calendar.m_yearDiv.m_yearButtons)
+		for i in range(0,yearButtonsSize):
+			yearButton = calendar.m_yearDiv.m_yearButtons[i]
+			if (yearButton.m_visible):
+				bounds = yearButton.m_bounds
+				if (mp.x >= bounds.left and mp.x <= bounds.right and mp.y >= bounds.top and mp.y <= bounds.bottom):
+					clickYearButton(mp, yearButton)
+					return
