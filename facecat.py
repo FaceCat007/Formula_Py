@@ -125,7 +125,10 @@ class FCPaint(object):
 		if(wd < 1):
 			wd = 1
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.drawLine(toColor(color), int(wd), 0, int(x1), int(y1), int(x2), int(y2))
+			inStyle = 0
+			if(style != 0):
+				inStyle = 2
+			self.m_gdiPlusPaint.drawLine(toColor(color), int(wd), inStyle, int(x1), int(y1), int(x2), int(y2))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -153,7 +156,10 @@ class FCPaint(object):
 					strApt += str(x) + "," + str(y)
 					if(i != len(apt) - 1):
 						strApt += " "
-				self.m_gdiPlusPaint.drawPolyline(toColor(color), int(wd), 0, strApt)
+				inStyle = 0
+				if(style != 0):
+					inStyle = 2
+				self.m_gdiPlusPaint.drawPolyline(toColor(color), int(wd), inStyle, strApt)
 			else:
 				hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 				hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -188,7 +194,10 @@ class FCPaint(object):
 					strApt += str(x) + "," + str(y)
 					if(i != len(apt) - 1):
 						strApt += " "
-				self.m_gdiPlusPaint.drawPolygon(toColor(color), int(wd), 0, strApt)
+				inStyle = 0
+				if(style != 0):
+					inStyle = 2
+				self.m_gdiPlusPaint.drawPolygon(toColor(color), int(wd), inStyle, strApt)
 			else:
 				hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 				hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -221,7 +230,10 @@ class FCPaint(object):
 		if(wd < 1):
 			wd = 1
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.drawRect(toColor(color), int(wd), 0, int(left), int(top), int(right), int(bottom))
+			inStyle = 0
+			if(style != 0):
+				inStyle = 2
+			self.m_gdiPlusPaint.drawRect(toColor(color), int(wd), inStyle, int(left), int(top), int(right), int(bottom))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -246,7 +258,10 @@ class FCPaint(object):
 		if(wd < 1):
 			wd = 1
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.drawEllipse(toColor(color), int(wd), 0, int(left), int(top), int(right), int(bottom))
+			inStyle = 0
+			if(style != 0):
+				inStyle = 2
+			self.m_gdiPlusPaint.drawEllipse(toColor(color), int(wd), inStyle, int(left), int(top), int(right), int(bottom))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -593,21 +608,21 @@ class GdiPlusPaint(object):
     #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
     #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
 	def drawArc(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.drawArcGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
+		return self.m_gdiPlus.drawArcGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
 	#设置贝赛尔曲线
     #dwPenColor 颜色
     #width 宽度
     #style 样式
     #strApt 点阵字符串 x1,y1 x2,y2...
 	def drawBezier(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawBezierGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+		return self.m_gdiPlus.drawBezierGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_char_p(strApt.encode(self.m_encoding)))
 	#绘制曲线
     #dwPenColor 颜色
     #width 宽度
     #style 样式
     #strApt 点阵字符串 x1,y1 x2,y2...
 	def drawCurve(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawCurveGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+		return self.m_gdiPlus.drawCurveGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_char_p(strApt.encode(self.m_encoding)))
 	#绘制椭圆
     #dwPenColor 颜色
     #width 宽度
@@ -617,7 +632,7 @@ class GdiPlusPaint(object):
     #right 右侧坐标
     #bottom 底部坐标
 	def drawEllipse(self, dwPenColor, width, style, left, top, right, bottom):
-		return self.m_gdiPlus.drawEllipseGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
+		return self.m_gdiPlus.drawEllipseGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(left), c_int(top), c_int(right), c_int(bottom))
 	#绘制图片
     #imagePath 图片路径
     #rect 绘制区域
@@ -632,13 +647,13 @@ class GdiPlusPaint(object):
     #x2 第二个点的横坐标
     #y2 第二个点的纵坐标
 	def drawLine(self, dwPenColor, width, style, x1, y1, x2, y2):
-		return self.m_gdiPlus.drawLineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(x1), c_int(y1), c_int(x2), c_int(y2))
+		return self.m_gdiPlus.drawLineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(x1), c_int(y1), c_int(x2), c_int(y2))
 	#绘制直线
     #dwPenColor 颜色
     #width 宽度
     #style 样式
 	def drawPath(self, dwPenColor, width, style):
-		return self.m_gdiPlus.drawPathGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0))
+		return self.m_gdiPlus.drawPathGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style))
 	#绘制扇形
     #dwPenColor 颜色
     #width 宽度
@@ -647,28 +662,28 @@ class GdiPlusPaint(object):
     #startAngle 从x轴到弧线的起始点沿顺时针方向度量的角（以度为单位）
     #sweepAngle 从startAngle参数到弧线的结束点沿顺时针方向度量的角（以度为单位）
 	def drawPie(self, dwPenColor, width, style, left, top, right, bottom, startAngle, sweepAngle):
-		return self.m_gdiPlus.drawPieGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
+		return self.m_gdiPlus.drawPieGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(left), c_int(top), c_int(right), c_int(bottom), c_float(startAngle), c_float(sweepAngle))
 	#绘制多边形
     #dwPenColor 颜色
     #width 宽度
     #style 样式
     #strApt 点阵字符串 x1,y1 x2,y2...
 	def drawPolygon(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawPolygonGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+		return self.m_gdiPlus.drawPolygonGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_char_p(strApt.encode(self.m_encoding)))
 	#绘制大量直线
     #dwPenColor 颜色
     #width 宽度
     #style 样式
     #strApt 点阵字符串 x1,y1 x2,y2...
 	def drawPolyline(self, dwPenColor, width, style, strApt):
-		return self.m_gdiPlus.drawPolylineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_char_p(strApt.encode(self.m_encoding)))
+		return self.m_gdiPlus.drawPolylineGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_char_p(strApt.encode(self.m_encoding)))
 	#绘制矩形
     #dwPenColor 颜色
     #width 宽度
     #style 样式
     #rect 矩形区域
 	def drawRect(self, dwPenColor, width, style, left, top, right, bottom):
-		return self.m_gdiPlus.drawRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom))
+		return self.m_gdiPlus.drawRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(left), c_int(top), c_int(right), c_int(bottom))
 	#绘制圆角矩形
     #dwPenColor 颜色
     #width 宽度
@@ -676,7 +691,7 @@ class GdiPlusPaint(object):
     #rect 矩形区域
     #cornerRadius 边角半径
 	def drawRoundRect(self, dwPenColor, width, style, left, top, right, bottom, cornerRadius):
-		return self.m_gdiPlus.drawRoundRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(0), c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
+		return self.m_gdiPlus.drawRoundRectGdiPlus(self.m_gID, dwPenColor, c_float(width), c_int(style), c_int(left), c_int(top), c_int(right), c_int(bottom), c_int(cornerRadius))
 	#绘制文字
     #text 文字
     #dwPenColor 颜色
