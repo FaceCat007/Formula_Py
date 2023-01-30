@@ -299,7 +299,7 @@ class FCPaint(object):
 				lf = win32gui.LOGFONT()
 				lf.lfFaceName = self.m_systemFont
 				self.m_textSize = fontSize
-				lf.lfHeight = self.m_textSize
+				lf.lfHeight = int(self.m_textSize)
 				#lf.lfWeight = 700
 				self.m_hFont = win32gui.CreateFontIndirect(lf)
 				self.m_hOldFont = win32gui.SelectObject(self.m_innerHDC, self.m_hFont);
@@ -434,7 +434,7 @@ class FCPaint(object):
 				lf = win32gui.LOGFONT()
 				lf.lfFaceName = self.m_systemFont
 				self.m_textSize = fontSize
-				lf.lfHeight = self.m_textSize
+				lf.lfHeight = int(self.m_textSize)
 				#lf.lfWeight = 700
 				self.m_hFont = win32gui.CreateFontIndirect(lf)
 				self.m_hOldFont = win32gui.SelectObject(self.m_innerHDC, self.m_hFont);
@@ -462,7 +462,7 @@ class FCPaint(object):
 				lf = win32gui.LOGFONT()
 				lf.lfFaceName = self.m_systemFont
 				self.m_textSize = fontSize
-				lf.lfHeight = self.m_textSize
+				lf.lfHeight = int(self.m_textSize)
 				#lf.lfWeight = 700
 				self.m_hFont = win32gui.CreateFontIndirect(lf)
 				self.m_hOldFont = win32gui.SelectObject(self.m_innerHDC, self.m_hFont);
@@ -490,7 +490,7 @@ class FCPaint(object):
 			lf = win32gui.LOGFONT()
 			lf.lfFaceName = self.m_systemFont
 			self.m_textSize = 19
-			lf.lfHeight = self.m_textSize
+			lf.lfHeight = int(self.m_textSize)
 			#lf.lfWeight = 700
 			self.m_hFont = win32gui.CreateFontIndirect(lf)
 			self.m_hOldFont = win32gui.SelectObject(self.m_innerHDC, self.m_hFont);
