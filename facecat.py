@@ -4102,51 +4102,52 @@ def getCandleRange(chart, plot):
 #datas:数据
 #curIndex:当前索引
 def selectLines(chart, mp, divIndex, datas, curIndex):
-	topY = getChartY(chart, divIndex, datas[curIndex])
-	if (chart.m_hScalePixel <= 1):
-		if(mp.y >= topY - 8 and mp.y <= topY + 8):
-			return TRUE
-	else:
-		index = curIndex
-		scaleX = getChartX(chart, index)
-		judgeTop = 0
-		judgeScaleX = scaleX
-		if (mp.x >= scaleX):
-			leftIndex = curIndex + 1
-			if (curIndex < chart.m_lastVisibleIndex):
-				rightValue = datas[leftIndex]
-				judgeTop = getChartY(chart, divIndex, rightValue)
-			else:
-				judgeTop = topY
+	if(len(datas) > 0):
+		topY = getChartY(chart, divIndex, datas[curIndex])
+		if (chart.m_hScalePixel <= 1):
+			if(mp.y >= topY - 8 and mp.y <= topY + 8):
+				return TRUE
 		else:
-			judgeScaleX = scaleX - chart.m_hScalePixel
-			rightIndex = curIndex - 1
-			if (curIndex > 0):
-				leftValue = datas[rightIndex]
-				judgeTop = getChartY(chart, divIndex, leftValue)
+			index = curIndex
+			scaleX = getChartX(chart, index)
+			judgeTop = 0
+			judgeScaleX = scaleX
+			if (mp.x >= scaleX):
+				leftIndex = curIndex + 1
+				if (curIndex < chart.m_lastVisibleIndex):
+					rightValue = datas[leftIndex]
+					judgeTop = getChartY(chart, divIndex, rightValue)
+				else:
+					judgeTop = topY
 			else:
-				judgeTop = topY
-		lineWidth = 4
-		judgeX = 0
-		judgeY = 0
-		judgeW = 0
-		judgeH = 0
-		if (judgeTop >= topY):
-			judgeX = judgeScaleX
-			judgeY = topY - 2 - lineWidth
-			judgeW = chart.m_hScalePixel
-			judgeH = judgeTop - topY + 4 + lineWidth
-			if(judgeH < 4):
-				judgeH = 4
-		else:
-			judgeX = judgeScaleX
-			judgeY = judgeTop - 2 - lineWidth / 2
-			judgeW = chart.m_hScalePixel
-			judgeH = topY - judgeTop + 4 + lineWidth
-			if(judgeH < 4):
-				judgeH = 4
-		if (mp.x >= judgeX and mp.x <= judgeX + judgeW and mp.y >= judgeY and mp.y <= judgeY + judgeH):
-			return TRUE
+				judgeScaleX = scaleX - chart.m_hScalePixel
+				rightIndex = curIndex - 1
+				if (curIndex > 0):
+					leftValue = datas[rightIndex]
+					judgeTop = getChartY(chart, divIndex, leftValue)
+				else:
+					judgeTop = topY
+			lineWidth = 4
+			judgeX = 0
+			judgeY = 0
+			judgeW = 0
+			judgeH = 0
+			if (judgeTop >= topY):
+				judgeX = judgeScaleX
+				judgeY = topY - 2 - lineWidth
+				judgeW = chart.m_hScalePixel
+				judgeH = judgeTop - topY + 4 + lineWidth
+				if(judgeH < 4):
+					judgeH = 4
+			else:
+				judgeX = judgeScaleX
+				judgeY = judgeTop - 2 - lineWidth / 2
+				judgeW = chart.m_hScalePixel
+				judgeH = topY - judgeTop + 4 + lineWidth
+				if(judgeH < 4):
+					judgeH = 4
+			if (mp.x >= judgeX and mp.x <= judgeX + judgeW and mp.y >= judgeY and mp.y <= judgeY + judgeH):
+				return TRUE
 	return FALSE
 
 #判断是否选中图形
@@ -5931,24 +5932,51 @@ def drawChartCrossLine(chart, paint, clipRect):
 		drawTitles = []
 		drawColors = []
 		if (chart.m_mainIndicator == "MA"):
-			drawTitles.append("MA5 " + toFixed(chart.m_ma5[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("MA10 " + toFixed(chart.m_ma10[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("MA20 " + toFixed(chart.m_ma20[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("MA30 " + toFixed(chart.m_ma30[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("MA120 " + toFixed(chart.m_ma120[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("MA250 " + toFixed(chart.m_ma250[crossLineIndex], chart.m_candleDigit))
+			if(len(chart.m_ma5) > 0):
+				drawTitles.append("MA5 " + toFixed(chart.m_ma5[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA5")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_ma10) > 0):
+				drawTitles.append("MA10 " + toFixed(chart.m_ma10[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA10")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_ma20) > 0):
+				drawTitles.append("MA20 " + toFixed(chart.m_ma20[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA20")
 			drawColors.append(m_indicatorColors[2])
+			if(len(chart.m_ma30) > 0):
+				drawTitles.append("MA30 " + toFixed(chart.m_ma30[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA30")
 			drawColors.append(m_indicatorColors[5])
+			if(len(chart.m_ma120) > 0):
+				drawTitles.append("MA120 " + toFixed(chart.m_ma120[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA120")
 			drawColors.append(m_indicatorColors[4])
+			if(len(chart.m_ma250) > 0):
+				drawTitles.append("MA250 " + toFixed(chart.m_ma250[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MA250")
 			drawColors.append(m_indicatorColors[3])
 		elif (chart.m_mainIndicator == "BOLL"):
-			drawTitles.append("MID " + toFixed(chart.m_boll_mid[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("UP " + toFixed(chart.m_boll_up[crossLineIndex], chart.m_candleDigit))
-			drawTitles.append("LOW " + toFixed(chart.m_boll_down[crossLineIndex], chart.m_candleDigit))
+			if(len(chart.m_boll_mid) > 0):
+				drawTitles.append("MID " + toFixed(chart.m_boll_mid[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("MID")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_boll_up) > 0):
+				drawTitles.append("UP " + toFixed(chart.m_boll_up[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("UP")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_boll_down) > 0):
+				drawTitles.append("LOW " + toFixed(chart.m_boll_down[crossLineIndex], chart.m_candleDigit))
+			else:
+				drawTitles.append("LOW")
 			drawColors.append(m_indicatorColors[2])
 		if(len(chart.m_shapes) > 0):
 			for i in range(0, len(chart.m_shapes)):
@@ -5974,58 +6002,124 @@ def drawChartCrossLine(chart, paint, clipRect):
 		drawTitles = []
 		drawColors = []
 		if(chart.m_showIndicator == "MACD"):
-			drawTitles.append("DIF " + toFixed(chart.m_alldifarr[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("DEA " + toFixed(chart.m_alldeaarr[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("MACD " + toFixed(chart.m_allmacdarr[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_alldifarr) > 0):
+				drawTitles.append("DIF " + toFixed(chart.m_alldifarr[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("DIF")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_alldeaarr) > 0):
+				drawTitles.append("DEA " + toFixed(chart.m_alldeaarr[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("DEA")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_allmacdarr) > 0):
+				drawTitles.append("MACD " + toFixed(chart.m_allmacdarr[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("MACD")
 			drawColors.append(m_indicatorColors[4])
 		elif(chart.m_showIndicator == "KDJ"):
-			drawTitles.append("K " + toFixed(chart.m_kdj_k[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("D " + toFixed(chart.m_kdj_d[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("J " + toFixed(chart.m_kdj_j[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_kdj_k) > 0):
+				drawTitles.append("K " + toFixed(chart.m_kdj_k[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("K")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_kdj_d) > 0):
+				drawTitles.append("D " + toFixed(chart.m_kdj_d[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("D")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_kdj_j) > 0):
+				drawTitles.append("J " + toFixed(chart.m_kdj_j[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("J")
 			drawColors.append(m_indicatorColors[2])
 		elif(chart.m_showIndicator == "RSI"):
-			drawTitles.append("RSI6 " + toFixed(chart.m_rsi1[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("RSI12 " + toFixed(chart.m_rsi2[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("RSI24 " + toFixed(chart.m_rsi3[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_rsi1) > 0):
+				drawTitles.append("RSI6 " + toFixed(chart.m_rsi1[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("RSI6")
 			drawColors.append(m_indicatorColors[5])
+			if(len(chart.m_rsi2) > 0):
+				drawTitles.append("RSI12 " + toFixed(chart.m_rsi2[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("RSI12")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_rsi3) > 0):
+				drawTitles.append("RSI24 " + toFixed(chart.m_rsi3[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("RSI24")
 			drawColors.append(m_indicatorColors[2])
 		elif(chart.m_showIndicator == "BIAS"):
-			drawTitles.append("BIAS6 " + toFixed(chart.m_bias1[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("BIAS12 " + toFixed(chart.m_bias2[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("BIAS24 " + toFixed(chart.m_bias3[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_bias1) > 0):
+				drawTitles.append("BIAS6 " + toFixed(chart.m_bias1[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("BIAS6")
 			drawColors.append(m_indicatorColors[5])
+			if(len(chart.m_bias2) > 0):
+				drawTitles.append("BIAS12 " + toFixed(chart.m_bias2[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("BIAS12")
 			drawColors.append(m_indicatorColors[1])
+			if(len(chart.m_bias3) > 0):
+				drawTitles.append("BIAS24 " + toFixed(chart.m_bias3[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("BIAS24")
 			drawColors.append(m_indicatorColors[2])
 		elif(chart.m_showIndicator == "ROC"):
-			drawTitles.append("ROC " + toFixed(chart.m_roc[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("ROCMA " + toFixed(chart.m_roc_ma[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_roc) > 0):
+				drawTitles.append("ROC " + toFixed(chart.m_roc[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("ROC")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_roc_ma) > 0):
+				drawTitles.append("ROCMA " + toFixed(chart.m_roc_ma[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("ROCMA")
 			drawColors.append(m_indicatorColors[1])       
 		elif(chart.m_showIndicator == "WR"):
-			drawTitles.append("WR5 " + toFixed(chart.m_wr1[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("WR10 " + toFixed(chart.m_wr2[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_wr1) > 0):
+				drawTitles.append("WR5 " + toFixed(chart.m_wr1[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("WR5")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_wr2) > 0):
+				drawTitles.append("WR10 " + toFixed(chart.m_wr2[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("WR10")
 			drawColors.append(m_indicatorColors[1])
 		elif(chart.m_showIndicator == "CCI"):
-			drawTitles.append("CCI " + toFixed(chart.m_cci[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_cci) > 0):
+				drawTitles.append("CCI " + toFixed(chart.m_cci[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("CCI")
 			drawColors.append(m_indicatorColors[0])
 		elif(chart.m_showIndicator == "BBI"):
-			drawTitles.append("BBI " + toFixed(chart.m_bbi[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_bbi) > 0):
+				drawTitles.append("BBI " + toFixed(chart.m_bbi[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("BBI")
 			drawColors.append(m_indicatorColors[0])
 		elif(chart.m_showIndicator == "TRIX"):
-			drawTitles.append("TRIX " + toFixed(chart.m_trix[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("TRIXMA " + toFixed(chart.m_trix_ma[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_trix) > 0):
+				drawTitles.append("TRIX " + toFixed(chart.m_trix[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("TRIX")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_trix_ma) > 0):
+				drawTitles.append("TRIXMA " + toFixed(chart.m_trix_ma[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("TRIXMA")
 			drawColors.append(m_indicatorColors[1])
 		elif(chart.m_showIndicator == "DMA"):
-			drawTitles.append("MA10 " + toFixed(chart.m_dma1[crossLineIndex], chart.m_indDigit))
-			drawTitles.append("MA50 " + toFixed(chart.m_dma2[crossLineIndex], chart.m_indDigit))
+			if(len(chart.m_dma1) > 0):
+				drawTitles.append("MA10 " + toFixed(chart.m_dma1[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("MA10")
 			drawColors.append(m_indicatorColors[0])
+			if(len(chart.m_dma2) > 0):
+				drawTitles.append("MA50 " + toFixed(chart.m_dma2[crossLineIndex], chart.m_indDigit))
+			else:
+				drawTitles.append("MA50")
 			drawColors.append(m_indicatorColors[1])
 		if(len(chart.m_shapes) > 0):
 			for i in range(0, len(chart.m_shapes)):
