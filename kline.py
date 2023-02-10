@@ -668,6 +668,8 @@ def onViewMouseWheel(view, mp, buttons, clicks, delta):
 			zoomInChart(view);
 		invalidateView(view, view.m_paint)
 
+##########################################新用户先看分割线下的代码#############################################
+
 facecatcpp = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
 cdll.argtypes = [c_char_p, c_int, c_double, c_long, c_wchar_p]
 

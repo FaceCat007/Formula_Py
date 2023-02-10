@@ -1184,6 +1184,7 @@ class FCPlot(object):
 class FCChart(FCView):
 	def __init__(self):
 		super().__init__()
+		self.m_allowDragChartDiv = TRUE #是否允许拖拽图层
 		self.m_candleDistance = 0 #蜡烛线的距离
 		self.m_hScalePixel = 11 #蜡烛线的宽度
 		self.m_data = [] #K线数据
@@ -1300,6 +1301,8 @@ m_lastIndexCache_Chart = -1
 m_secondTouchIndexCache_Chart = -1
 m_secondTouchPointCache_Chart = FCPoint(0,0)
 m_mouseDownPoint_Chart = FCPoint(0,0)
+m_firstPaddingTop = 0
+m_firtstPaddingBottom = 0
 
 #添加顶层视图
 #view 视图
@@ -3895,7 +3898,7 @@ def zoomOutChart(chart):
 		dataCount = len(chart.m_data)
 		findex = chart.m_firstVisibleIndex
 		lindex = chart.m_lastVisibleIndex
-		if (hScalePixel < 500):
+		if (hScalePixel < pureH):
 			oriMax = getChartMaxVisibleCount(chart, hScalePixel, pureH)
 			if (dataCount < oriMax):
 				deal = 1
@@ -5570,6 +5573,8 @@ def mouseMoveChart(chart, firstTouch, secondTouch, firstPoint, secondPoint):
 	global m_secondTouchPointCache_Chart
 	global m_mouseDownPoint_Chart
 	global m_calculteMaxMin
+	global m_firstPaddingTop
+	global m_firtstPaddingBottom
 	if(chart.m_data == None or len(chart.m_data) == 0):
 		return
 	mp = firstPoint
@@ -5639,6 +5644,8 @@ def mouseMoveChart(chart, firstTouch, secondTouch, firstPoint, secondPoint):
 			m_firstTouchIndexCache_Chart = getChartIndex(chart, m_firstTouchPointCache_Chart)
 			m_firstIndexCache_Chart = chart.m_firstVisibleIndex
 			m_lastIndexCache_Chart = chart.m_lastVisibleIndex
+			m_firstPaddingTop = chart.m_candlePaddingTop
+			m_firtstPaddingBottom = chart.m_candlePaddingBottom
 
 	if (firstTouch and secondTouch):
 		if (m_firstTouchIndexCache_Chart != -1 and m_secondTouchIndexCache_Chart != -1):
@@ -5689,6 +5696,9 @@ def mouseMoveChart(chart, firstTouch, secondTouch, firstPoint, secondPoint):
 			subIndex = len(chart.m_data) - 1 - m_lastIndexCache_Chart
 		elif (chart.m_firstVisibleIndex + subIndex < 0):
 			subIndex = m_firstIndexCache_Chart
+		if(chart.m_allowDragChartDiv):
+			chart.m_candlePaddingTop = m_firstPaddingTop - int(m_firstTouchPointCache_Chart.y - firstPoint.y)
+			chart.m_candlePaddingBottom = m_firtstPaddingBottom + int(m_firstTouchPointCache_Chart.y - firstPoint.y)
 		chart.m_firstVisibleIndex = m_firstIndexCache_Chart + subIndex
 		chart.m_lastVisibleIndex = m_lastIndexCache_Chart + subIndex
 		checkChartLastVisibleIndex(chart)
@@ -5720,7 +5730,11 @@ def drawChartScale(chart, paint, clipRect):
 	if(indDivHeight2 > 0):
 		paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_leftVScaleWidth, candleDivHeight + volDivHeight + indDivHeight, chart.m_size.cx - chart.m_rightVScaleWidth, candleDivHeight + volDivHeight + indDivHeight)
 	if(chart.m_data != None and len(chart.m_data) > 0):
-		ret = chartGridScale(chart.m_candleMin, chart.m_candleMax,  (candleDivHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((candleDivHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) / chart.m_vScaleDistance))
+		topPoint = FCPoint(0, 10)
+		bottomPoint = FCPoint(0, candleDivHeight - 10)
+		candleMax = getChartValue(chart, topPoint)
+		candleMin = getChartValue(chart, bottomPoint)
+		ret = chartGridScale(candleMin, candleMax,  (candleDivHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((candleDivHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) / chart.m_vScaleDistance))
 		if(m_gridStep_Chart > 0 and ret > 0):
 			drawValues = []
 			isTrend = FALSE
@@ -5729,37 +5743,39 @@ def drawChartScale(chart, paint, clipRect):
 			firstOpen = 0
 			if(isTrend):
 				firstOpen = chart.m_data[chart.m_firstVisibleIndex].m_close
-				subValue = (chart.m_candleMax - chart.m_candleMin)
+				subValue = candleMax - candleMin
 				count = int((candleDivHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) / chart.m_vScaleDistance)
 				if(count > 0):
 					subValue /= count
 				start = firstOpen
-				while(start < chart.m_candleMax):
+				while(start < candleMax):
 					start += subValue
-					if(start <= chart.m_candleMax):
+					if(start <= candleMax):
 						drawValues.append(start)
 				start = firstOpen
-				while(start > chart.m_candleMin):
+				while(start > candleMin):
 					start -= subValue
-					if(start >= chart.m_candleMin):
+					if(start >= candleMin):
 						drawValues.append(start)
 			else:
 				start = 0
-				if (chart.m_candleMin >= 0):
-					while (start + m_gridStep_Chart < chart.m_candleMin):
+				if (candleMin >= 0):
+					while (start + m_gridStep_Chart < candleMin):
 						start += m_gridStep_Chart
 				else:
-					while (start - m_gridStep_Chart > chart.m_candleMin):
+					while (start - m_gridStep_Chart > candleMin):
 						start -= m_gridStep_Chart
 
-				while (start <= chart.m_candleMax):
-					if(start > chart.m_candleMin):
+				while (start <= candleMax):
+					if(start > candleMin):
 						drawValues.append(start)
 					start += m_gridStep_Chart
 			drawValues.append(firstOpen);
 			for i in range(0,len(drawValues)):
 				start = drawValues[i]
 				hAxisY = getChartY(chart, 0, start)
+				if hAxisY < 1 or hAxisY > candleDivHeight:
+					continue
 				paint.drawLine(chart.m_gridColor, m_lineWidth_Chart, [1,1], chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY))
 				paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY))
 				paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY))
@@ -5774,18 +5790,24 @@ def drawChartScale(chart, paint, clipRect):
 				else:
 					paint.drawText(toFixed(start, chart.m_candleDigit), chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
 				paint.drawText(toFixed(start, chart.m_candleDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
-		ret = chartGridScale(chart.m_volMin, chart.m_volMax,  (volDivHeight - chart.m_volPaddingTop - chart.m_volPaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((volDivHeight - chart.m_volPaddingTop - chart.m_volPaddingBottom) / chart.m_vScaleDistance))
+		topPoint = FCPoint(0, candleDivHeight + 10)
+		bottomPoint = FCPoint(0, candleDivHeight + volDivHeight - 10)
+		volMax = getChartValue(chart, topPoint)
+		volMin = getChartValue(chart, bottomPoint)
+		ret = chartGridScale(volMin, volMax,  (volDivHeight - chart.m_volPaddingTop - chart.m_volPaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((volDivHeight - chart.m_volPaddingTop - chart.m_volPaddingBottom) / chart.m_vScaleDistance))
 		if(m_gridStep_Chart > 0 and ret > 0):
 			start = 0
-			if (chart.m_volMin >= 0):
-				while (start + m_gridStep_Chart < chart.m_volMin):
+			if (volMin >= 0):
+				while (start + m_gridStep_Chart < volMin):
 					start += m_gridStep_Chart
 			else:
-				while (start - m_gridStep_Chart > chart.m_volMin):
+				while (start - m_gridStep_Chart > volMin):
 					start -= m_gridStep_Chart
-			while (start <= chart.m_volMax):
-				if(start > chart.m_volMin):
+			while (start <= volMax):
+				if(start > volMin):
 					hAxisY = getChartY(chart, 1, start)
+					if hAxisY < candleDivHeight or hAxisY > candleDivHeight + volDivHeight:
+						continue
 					paint.drawLine(chart.m_gridColor, m_lineWidth_Chart, [1,1], chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY))
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY))
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY))
@@ -5794,18 +5816,24 @@ def drawChartScale(chart, paint, clipRect):
 					paint.drawText(toFixed((start/chart.m_magnitude), chart.m_volDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
 				start += m_gridStep_Chart
 		if(indDivHeight > 0):
-			ret = chartGridScale(chart.m_indMin, chart.m_indMax, (indDivHeight - chart.m_indPaddingTop - chart.m_indPaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((indDivHeight - chart.m_indPaddingTop - chart.m_indPaddingBottom) / chart.m_vScaleDistance))
+			topPoint = FCPoint(0, candleDivHeight + volDivHeight + 10)
+			bottomPoint = FCPoint(0, candleDivHeight + volDivHeight + indDivHeight - 10)
+			indMax = getChartValue(chart, topPoint)
+			indMin = getChartValue(chart, bottomPoint)
+			ret = chartGridScale(indMin, indMax, (indDivHeight - chart.m_indPaddingTop - chart.m_indPaddingBottom) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((indDivHeight - chart.m_indPaddingTop - chart.m_indPaddingBottom) / chart.m_vScaleDistance))
 			if(m_gridStep_Chart > 0 and ret > 0):
 				start = 0;
-				if (chart.m_indMin >= 0):
-					while (start + m_gridStep_Chart < chart.m_indMin):
+				if (indMin >= 0):
+					while (start + m_gridStep_Chart < indMin):
 						start += m_gridStep_Chart
 				else:
-					while (start - m_gridStep_Chart > chart.m_indMin):
+					while (start - m_gridStep_Chart > indMin):
 						start -= m_gridStep_Chart
-				while (start <= chart.m_indMax):
-					if(start > chart.m_indMin):
+				while (start <= indMax):
+					if(start > indMin):
 						hAxisY = getChartY(chart, 2, start)
+						if hAxisY < candleDivHeight + volDivHeight or hAxisY > candleDivHeight + volDivHeight + indDivHeight:
+							continue
 						paint.drawLine(chart.m_gridColor, m_lineWidth_Chart, [1,1], chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY))
 						paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY))
 						paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY))
@@ -5814,18 +5842,24 @@ def drawChartScale(chart, paint, clipRect):
 						paint.drawText(toFixed(start, chart.m_indDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
 					start += m_gridStep_Chart
 		if(indDivHeight2 > 0):
-			ret = chartGridScale(chart.m_indMin2, chart.m_indMax2, (indDivHeight2 - chart.m_indPaddingTop2 - chart.m_indPaddingBottom2) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((indDivHeight2 - chart.m_indPaddingTop2 - chart.m_indPaddingBottom2) / chart.m_vScaleDistance))
+			topPoint = FCPoint(0, candleDivHeight + volDivHeight + indDivHeight + 10)
+			bottomPoint = FCPoint(0, candleDivHeight + volDivHeight + indDivHeight + indDivHeight2 - 10)
+			indMax2 = getChartValue(chart, topPoint)
+			indMin2 = getChartValue(chart, bottomPoint)
+			ret = chartGridScale(indMin2, indMax2, (indDivHeight2 - chart.m_indPaddingTop2 - chart.m_indPaddingBottom2) / 2, chart.m_vScaleDistance, chart.m_vScaleDistance / 2, int((indDivHeight2 - chart.m_indPaddingTop2 - chart.m_indPaddingBottom2) / chart.m_vScaleDistance))
 			if(m_gridStep_Chart > 0 and ret > 0):
 				start = 0;
-				if (chart.m_indMin2 >= 0):
-					while (start + m_gridStep_Chart < chart.m_indMin2):
+				if (indMin2 >= 0):
+					while (start + m_gridStep_Chart < indMin2):
 						start += m_gridStep_Chart
 				else:
-					while (start - m_gridStep_Chart > chart.m_indMin2):
+					while (start - m_gridStep_Chart > indMin2):
 						start -= m_gridStep_Chart 
-				while (start <= chart.m_indMax2):
-					if(start > chart.m_indMin2):
+				while (start <= indMax2):
+					if(start > indMin2):
 						hAxisY = getChartY(chart, 3, start)
+						if hAxisY < candleDivHeight + volDivHeight + indDivHeight or hAxisY > candleDivHeight + volDivHeight + indDivHeight + indDivHeight2:
+							continue
 						paint.drawLine(chart.m_gridColor, m_lineWidth_Chart, [1,1], chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY))
 						paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY))
 						paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY))
@@ -6235,6 +6269,21 @@ def drawChartStock(chart, paint, clipRect):
 		if(chart.m_lastValidIndex != -1):
 			lastValidIndex = chart.m_lastValidIndex
 		maxVisibleRecord = getChartMaxVisibleCount(chart, chart.m_hScalePixel, getChartWorkAreaWidth(chart))
+		newPaint = None
+		if(paint.m_gdiPlusPaint != None):
+			newPaint = paint
+			divHeight = getCandleDivHeight(chart)
+			cRect = FCRect(chart.m_leftVScaleWidth, 0, chart.m_size.cx, divHeight)
+			newPaint.setClip(cRect)
+		else:
+			newPaint = FCPaint()
+			newPaint.m_drawHDC = paint.m_innerHDC
+			newPaint.m_memBM = paint.m_innerBM
+			newPaint.m_scaleFactorX = paint.m_scaleFactorX
+			newPaint.m_scaleFactorY = paint.m_scaleFactorY
+			divHeight = getCandleDivHeight(chart)
+			cRect = FCRect(chart.m_leftVScaleWidth, 0, chart.m_size.cx, divHeight)
+			newPaint.beginClip(cRect)
 		if (isTrend):
 			drawPoints = []
 			for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
@@ -6242,7 +6291,7 @@ def drawChartStock(chart, paint, clipRect):
 				close = chart.m_data[i].m_close
 				closeY = getChartY(chart, 0, close)
 				drawPoints.append((x, closeY))
-			paint.drawPolyline(m_indicatorColors[7], m_lineWidth_Chart, 0, drawPoints)
+			newPaint.drawPolyline(m_indicatorColors[7], m_lineWidth_Chart, 0, drawPoints)
 		hasMinTag = FALSE
 		hasMaxTag = FALSE
 		for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
@@ -6255,6 +6304,56 @@ def drawChartStock(chart, paint, clipRect):
 			closeY = getChartY(chart, 0, close)
 			highY = getChartY(chart, 0, high)
 			lowY = getChartY(chart, 0, low)
+			if (close >= openValue):
+				if (isTrend == FALSE):
+					newPaint.drawLine(chart.m_upColor, m_lineWidth_Chart, 0, x, highY, x, lowY)
+					if (cWidth > 0):
+						if (close == openValue):
+							newPaint.drawLine(chart.m_upColor, m_lineWidth_Chart, 0, x - cWidth, closeY, x + cWidth, closeY)
+						else:
+							newPaint.fillRect(chart.m_upColor, x - cWidth, closeY, x + cWidth + 1, openY)
+			else:
+				if (isTrend == FALSE):
+					newPaint.drawLine(chart.m_downColor, m_lineWidth_Chart, 0, x, highY, x, lowY)
+					if (cWidth > 0):
+						newPaint.fillRect(chart.m_downColor, x - cWidth, openY, x + cWidth + 1, closeY)
+			if (chart.m_selectShape == "CANDLE"):
+				kPInterval = int(maxVisibleRecord / 30)
+				if (kPInterval < 2):
+					kPInterval = 3
+				if (i % kPInterval == 0):
+					if (isTrend == FALSE):
+						newPaint.fillRect(m_indicatorColors[0], x - 3, closeY - 3, x + 3, closeY + 3)
+			if (isTrend == FALSE):
+				if (hasMaxTag == FALSE):
+					if (high == chart.m_candleMax):
+						tag = toFixed(high, chart.m_candleDigit)
+						tSize = newPaint.textSize(tag, chart.m_font)
+						newPaint.drawText(tag, chart.m_textColor, chart.m_font, x - tSize.cx / 2, highY - tSize.cy - 2)
+						hasMaxTag = TRUE
+				if (hasMinTag == FALSE):
+					if (low == chart.m_candleMin):
+						tag = toFixed(low, chart.m_candleDigit)
+						tSize = newPaint.textSize(tag, chart.m_font)
+						newPaint.drawText(tag, chart.m_textColor, chart.m_font, x - tSize.cx / 2, lowY + 2)
+						hasMinTag = TRUE
+		if(newPaint.m_gdiPlusPaint == None):
+				rect = FCRect(0, 0, cRect.right - cRect.left, cRect.bottom - cRect.top)
+				win32gui.StretchBlt(newPaint.m_drawHDC, int(cRect.left), int(cRect.top), int(cRect.right - cRect.left), int(cRect.bottom - cRect.top), newPaint.m_innerHDC, int(cRect.left - rect.left), int(cRect.top - rect.top), int(cRect.right - cRect.left), int(cRect.bottom - cRect.top), SRCPAINT)
+				if(newPaint.m_innerHDC != None):
+					win32gui.DeleteObject(newPaint.m_innerHDC)
+					newPaint.m_innerHDC = None
+				if(newPaint.m_innerBM != None):
+					win32gui.DeleteObject(newPaint.m_innerBM)
+					newPaint.m_innerBM = None
+		else:
+			newPaint.setClip(FCRect(0, 0, chart.m_size.cx, chart.m_size.cy))
+		for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
+			x = getChartX(chart, i)
+			openValue = chart.m_data[i].m_open
+			close = chart.m_data[i].m_close
+			openY = getChartY(chart, 0, openValue)
+			closeY = getChartY(chart, 0, close)
 			volY = 0
 			zeroY = 0
 			if(volHeight > 0):
@@ -6266,12 +6365,7 @@ def drawChartStock(chart, paint, clipRect):
 					if(volHeight > 0):
 						paint.drawLine(m_indicatorColors[6], m_lineWidth_Chart, 0, x, volY, x, zeroY)
 				else:
-					paint.drawLine(chart.m_upColor, m_lineWidth_Chart, 0, x, highY, x, lowY)
 					if (cWidth > 0):
-						if (close == openValue):
-							paint.drawLine(chart.m_upColor, m_lineWidth_Chart, 0, x - cWidth, closeY, x + cWidth, closeY)
-						else:
-							paint.fillRect(chart.m_upColor, x - cWidth, closeY, x + cWidth + 1, openY)
 						if(volHeight > 0):
 							paint.fillRect(chart.m_upColor, x - cWidth, volY, x + cWidth + 1, zeroY)
 					else:
@@ -6282,40 +6376,18 @@ def drawChartStock(chart, paint, clipRect):
 					if(volHeight > 0):
 						paint.drawLine(m_indicatorColors[6], m_lineWidth_Chart, 0, x, volY, x, zeroY)
 				else:
-					paint.drawLine(chart.m_downColor, m_lineWidth_Chart, 0, x, highY, x, lowY)
 					if (cWidth > 0):
-						paint.fillRect(chart.m_downColor, x - cWidth, openY, x + cWidth + 1, closeY)
 						if(volHeight > 0):
 							paint.fillRect(chart.m_downColor, x - cWidth, volY, x + cWidth + 1, zeroY)
 					else:
 						if(volHeight > 0):
 							paint.drawLine(chart.m_downColor, m_lineWidth_Chart, 0, x - cWidth, volY, x + cWidth, zeroY)
-			if (chart.m_selectShape == "CANDLE"):
-				kPInterval = int(maxVisibleRecord / 30)
-				if (kPInterval < 2):
-					kPInterval = 3
-				if (i % kPInterval == 0):
-					if (isTrend == FALSE):
-						paint.fillRect(m_indicatorColors[0], x - 3, closeY - 3, x + 3, closeY + 3)
-			elif (chart.m_selectShape == "VOL"):
+			if (chart.m_selectShape == "VOL"):
 				kPInterval = int(maxVisibleRecord / 30)
 				if (kPInterval < 2):
 					kPInterval = 3
 				if (i % kPInterval == 0):
 					paint.fillRect(m_indicatorColors[0], x - 3, volY - 3, x + 3, volY + 3)
-			if (isTrend == FALSE):
-				if (hasMaxTag == FALSE):
-					if (high == chart.m_candleMax):
-						tag = toFixed(high, chart.m_candleDigit)
-						tSize = paint.textSize(tag, chart.m_font)
-						paint.drawText(tag, chart.m_textColor, chart.m_font, x - tSize.cx / 2, highY - tSize.cy - 2)
-						hasMaxTag = TRUE
-				if (hasMinTag == FALSE):
-					if (low == chart.m_candleMin):
-						tag = toFixed(low, chart.m_candleDigit)
-						tSize = paint.textSize(tag, chart.m_font)
-						paint.drawText(tag, chart.m_textColor, chart.m_font, x - tSize.cx / 2, lowY + 2)
-						hasMinTag = TRUE
 		if (isTrend == FALSE):
 			newPaint = None
 			if(paint.m_gdiPlusPaint != None):
