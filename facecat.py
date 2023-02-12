@@ -525,7 +525,9 @@ class GdiPlusPaint(object):
 		self.m_encoding = "gbk" #解析编码
 	#初始化
 	def init(self):
-		self.m_gdiPlus = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
+		current_file_path = __file__
+		current_file_dir = os.path.dirname(current_file_path)
+		self.m_gdiPlus = cdll.LoadLibrary(current_file_dir + r"\\facecatcpp.dll")
 		cdll.argtypes = [c_char_p, c_int, c_float, c_double, c_long, c_wchar_p]
 	#创建GDI+
 	def createGdiPlus(self, hWnd):

@@ -529,7 +529,9 @@ def onViewClick(view, mp, buttons, clicks, delta):
 def bindFormula(name, clearOld, divIndex):
 	global m_shapes
 	global m_currentFormula
-	file0 = open(os.getcwd() + "\\" + name, encoding="UTF-8")
+	current_file_path = __file__
+	current_file_dir = os.path.dirname(current_file_path)
+	file0 = open(current_file_dir + "\\" + name, encoding="UTF-8")
 	formulaStr = file0.read()
 	file0.close()
 	m_currentFormula = formulaStr
@@ -670,7 +672,9 @@ def onViewMouseWheel(view, mp, buttons, clicks, delta):
 
 ##########################################新用户先看分割线下的代码#############################################
 
-facecatcpp = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
+current_file_path = __file__
+current_file_dir = os.path.dirname(current_file_path)
+facecatcpp = cdll.LoadLibrary(current_file_dir + r"\\facecatcpp.dll")
 cdll.argtypes = [c_char_p, c_int, c_double, c_long, c_wchar_p]
 
 #K线数据转字符串
@@ -790,7 +794,9 @@ def initChart():
 			subView.m_backColor = "rgb(255,255,255)"
 			subView.m_borderColor = "rgb(150,150,150)"
 			subView.m_textColor = "rgb(0,0,0)"
-	file0 = open(os.getcwd() + "\\SH600000.txt", encoding="UTF-8")
+	current_file_path = __file__
+	current_file_dir = os.path.dirname(current_file_path)
+	file0 = open(current_file_dir + "\\SH600000.txt", encoding="UTF-8")
 	dataText = file0.read()
 	file0.close()
 	strs = dataText.split("\n")

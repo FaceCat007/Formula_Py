@@ -22,7 +22,9 @@ def securityDatasToStr(datas):
 		result = result + str(data.m_date) + "," + str(data.m_close) + "," + str(data.m_high) + "," + str(data.m_low) + "," + str(data.m_open) + "," + str(data.m_volume) + "\r"
 	return result
 
-facecatcpp = cdll.LoadLibrary(os.getcwd() + r"\\facecatcpp.dll")
+current_file_path = __file__
+current_file_dir = os.path.dirname(current_file_path)
+facecatcpp = cdll.LoadLibrary(current_file_dir + r"\\facecatcpp.dll")
 cdll.argtypes = [c_char_p, c_int, c_double, c_long, c_wchar_p]
 
 #调用C++计算指标
@@ -48,11 +50,13 @@ def calculateFormulaWithShapes(formula, datas):
 	return str(recvData.value, encoding="gbk")
 
 #读取指标公式
-file0 = open(os.getcwd() + "\\指数平滑异同平均线(MACD).js", encoding="UTF-8")
+current_file_path = __file__
+current_file_dir = os.path.dirname(current_file_path)
+file0 = open(current_file_dir + "\\指数平滑异同平均线(MACD).js", encoding="UTF-8")
 formulaStr = file0.read()
 file0.close()
 
-file1 = open(os.getcwd() + "\\SH600000.txt", encoding="UTF-8")
+file1 = open(current_file_dir + "\\SH600000.txt", encoding="UTF-8")
 dataText = file1.read()
 file1.close()
 strs = dataText.split("\n")
