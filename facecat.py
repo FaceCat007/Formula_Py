@@ -1162,6 +1162,7 @@ class BaseShape(object):
 		self.m_text = "" #显示的文字
 		self.m_value = 0 #显示文字的值
 		self.m_showHideDatas = [] #控制显示隐藏的数据
+		self.m_leftOrRight = TRUE #依附于左轴或右轴
 
 #画线工具结构
 class FCPlot(object):
@@ -1206,6 +1207,14 @@ class FCChart(FCView):
 		self.m_indMin = 0 #指标层的最小值
 		self.m_indMax2 = 0 #指标层2的最大值
 		self.m_indMin2 = 0 #指标层2的最小值
+		self.m_candleMaxRight = 0 #蜡烛线的右轴最大值
+		self.m_candleMinRight = 0 #蜡烛线的右轴最小值
+		self.m_volMaxRight = 0 #成交量层的右轴最大值
+		self.m_volMinRight = 0 #成交量层的右轴最小值
+		self.m_indMaxRight = 0 #指标层的右轴最大值
+		self.m_indMinRight = 0 #指标层的右轴最小值
+		self.m_indMax2Right = 0 #指标层2的右轴最大值
+		self.m_indMin2Right = 0 #指标层2的右轴最小值
 		self.m_crossTipColor = "rgb(50,50,50)" #十字线标识的颜色
 		self.m_crossLineColor = "rgb(100,100,100)" #十字线的颜色
 		self.m_font = "14px Arial" #字体
@@ -3464,6 +3473,63 @@ def getChartY(chart, divIndex, value):
 			return 0
 	return 0
 
+#计算数值在层中右轴的位置
+#chart:K线
+#divIndex:所在层
+#chart:数值
+def getChartYInRight(chart, divIndex, value):
+	if(divIndex == 0):
+		if(chart.m_candleMaxRight > chart.m_candleMinRight):
+			cValue = value
+			cMax = chart.m_candleMaxRight
+			cMin = chart.m_candleMinRight
+			if(chart.m_vScaleType != "standard"):
+				if (cValue > 0):
+					cValue = log10(cValue)
+				elif (cValue < 0):
+					cValue = -log10(abs(cValue))
+				if (cMax > 0):
+					cMax = log10(cMax)
+				elif(cMax < 0):
+					cMax = -log10(abs(cMax))
+				if (cMin > 0):
+					cMin = log10(cMin)
+				elif (cMin < 0):
+					cMin = -log10(abs(cMin))
+			rate = (cValue - cMin) / (cMax - cMin)
+			divHeight = getCandleDivHeight(chart)
+			return divHeight - chart.m_candlePaddingBottom - (divHeight - chart.m_candlePaddingTop - chart.m_candlePaddingBottom) * rate
+		else:
+			return 0
+	elif(divIndex == 1):
+		if(chart.m_volMaxRight > chart.m_volMinRight):
+			rate = (value - chart.m_volMinRight) / (chart.m_volMaxRight - chart.m_volMinRight)
+			candleHeight = getCandleDivHeight(chart)
+			volHeight = getVolDivHeight(chart)
+			return candleHeight + volHeight - chart.m_volPaddingBottom - (volHeight - chart.m_volPaddingTop - chart.m_volPaddingBottom) * rate
+		else:
+			return 0
+	elif(divIndex == 2):
+		if(chart.m_indMaxRight > chart.m_indMinRight):
+			rate = (value - chart.m_indMinRight) / (chart.m_indMaxRight - chart.m_indMinRight)
+			candleHeight = getCandleDivHeight(chart)
+			volHeight = getVolDivHeight(chart)
+			indHeight = getIndDivHeight(chart)
+			return candleHeight + volHeight + indHeight - chart.m_indPaddingBottom - (indHeight - chart.m_indPaddingTop - chart.m_indPaddingBottom) * rate
+		else:	
+			return 0
+	elif(divIndex == 3):
+		if(chart.m_indMax2Right > chart.m_indMin2Right):
+			rate = (value - chart.m_indMin2Right) / (chart.m_indMax2Right - chart.m_indMin2Right)
+			candleHeight = getCandleDivHeight(chart)
+			volHeight = getVolDivHeight(chart)
+			indHeight = getIndDivHeight(chart)
+			indHeight2 = getIndDivHeight2(chart)
+			return candleHeight + volHeight + indHeight + indHeight2- chart.m_indPaddingBottom2 - (indHeight2 - chart.m_indPaddingTop2 - chart.m_indPaddingBottom2) * rate
+		else:	
+			return 0
+	return 0
+
 
 #根据坐标获取对应的值
 #chart:K线
@@ -3808,66 +3874,130 @@ def calculateChartMaxMin(chart):
 				for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
 					if (shape.m_divIndex == 0):
 						if (load1 == FALSE and i == chart.m_firstVisibleIndex):
-							chart.m_candleMax = shape.m_datas[i]
-							chart.m_candleMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								chart.m_candleMax = shape.m_datas[i]
+								chart.m_candleMin = shape.m_datas[i]
+							else:
+								chart.m_candleMaxRight = shape.m_datas[i]
+								chart.m_candleMinRight = shape.m_datas[i]
 							load1 = TRUE
 						else:
-							if (shape.m_datas[i] > chart.m_candleMax):
-								chart.m_candleMax = shape.m_datas[i]
-							if (shape.m_datas[i] < chart.m_candleMin):
-								chart.m_candleMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								if (shape.m_datas[i] > chart.m_candleMax):
+									chart.m_candleMax = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_candleMin):
+									chart.m_candleMin = shape.m_datas[i]
+							else:
+								if (shape.m_datas[i] > chart.m_candleMaxRight):
+									chart.m_candleMaxRight = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_candleMinRight):
+									chart.m_candleMinRight = shape.m_datas[i]
 					elif (shape.m_divIndex == 1):
 						if (load2 == FALSE and i == chart.m_firstVisibleIndex):
-							chart.m_volMax = shape.m_datas[i]
-							chart.m_volMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								chart.m_volMax = shape.m_datas[i]
+								chart.m_volMin = shape.m_datas[i]
+							else:
+								chart.m_volMaxRight = shape.m_datas[i]
+								chart.m_volMinRight = shape.m_datas[i]
 							load2 = TRUE
 						else:
-							if (shape.m_datas[i] > chart.m_volMax):
-								chart.m_volMax = shape.m_datas[i]
-							if (shape.m_datas[i] < chart.m_volMin):
-								chart.m_volMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								if (shape.m_datas[i] > chart.m_volMax):
+									chart.m_volMax = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_volMin):
+									chart.m_volMin = shape.m_datas[i]
+							else:
+								if (shape.m_datas[i] > chart.m_volMaxRight):
+									chart.m_volMaxRight = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_volMinRight):
+									chart.m_volMinRight = shape.m_datas[i]
 					elif (shape.m_divIndex == 2):
 						if (load3 == FALSE and i == chart.m_firstVisibleIndex):
-							chart.m_indMax = shape.m_datas[i]
-							chart.m_indMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								chart.m_indMax = shape.m_datas[i]
+								chart.m_indMin = shape.m_datas[i]
+							else:
+								chart.m_indMaxRight = shape.m_datas[i]
+								chart.m_indMinRight = shape.m_datas[i]
 							load3 = TRUE
 						else:
-							if (shape.m_datas[i] > chart.m_indMax):
-								chart.m_indMax = shape.m_datas[i]
-							if (shape.m_datas[i] < chart.m_indMin):
-								chart.m_indMin = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								if (shape.m_datas[i] > chart.m_indMax):
+									chart.m_indMax = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_indMin):
+									chart.m_indMin = shape.m_datas[i]
+							else:
+								if (shape.m_datas[i] > chart.m_indMaxRight):
+									chart.m_indMaxRight = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_indMinRight):
+									chart.m_indMinRight = shape.m_datas[i]
 					elif (shape.m_divIndex == 3):
 						if (load4 == FALSE and i == chart.m_firstVisibleIndex):
-							chart.m_indMax2 = shape.m_datas[i]
-							chart.m_indMin2 = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								chart.m_indMax2 = shape.m_datas[i]
+								chart.m_indMin2 = shape.m_datas[i]
+							else:
+								chart.m_indMax2Right = shape.m_datas[i]
+								chart.m_indMin2Right = shape.m_datas[i]
 							load4 = TRUE
 						else:
-							if (shape.m_datas[i] > chart.m_indMax2):
-								chart.m_indMax2 = shape.m_datas[i]
-							if (shape.m_datas[i] < chart.m_indMin2):
-								chart.m_indMin2 = shape.m_datas[i]
+							if(shape.m_leftOrRight):
+								if (shape.m_datas[i] > chart.m_indMax2):
+									chart.m_indMax2 = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_indMin2):
+									chart.m_indMin2 = shape.m_datas[i]
+							else:
+								if (shape.m_datas[i] > chart.m_indMax2Right):
+									chart.m_indMax2Right = shape.m_datas[i]
+								if (shape.m_datas[i] < chart.m_indMin2Right):
+									chart.m_indMin2Right = shape.m_datas[i]
 			if(len(shape.m_datas2) > 0):
 				for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
 					if (shape.m_divIndex == 0):
-						if (shape.m_datas2[i] > chart.m_candleMax):
-							chart.m_candleMax = shape.m_datas2[i]
-						if (shape.m_datas2[i] < chart.m_candleMin):
-							chart.m_candleMin = shape.m_datas2[i]
+						if(shape.m_leftOrRight):
+							if (shape.m_datas2[i] > chart.m_candleMax):
+								chart.m_candleMax = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_candleMin):
+								chart.m_candleMin = shape.m_datas2[i]
+						else:
+							if (shape.m_datas2[i] > chart.m_candleMaxRight):
+								chart.m_candleMaxRight = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_candleMinRight):
+								chart.m_candleMinRight = shape.m_datas2[i]
 					elif (shape.m_divIndex == 1):
-						if (shape.m_datas2[i] > chart.m_volMax):
-							chart.m_volMax = shape.m_datas2[i]
-						if (shape.m_datas2[i] < chart.m_volMin):
-							chart.m_volMin = shape.m_datas2[i]
+						if(shape.m_leftOrRight):
+							if (shape.m_datas2[i] > chart.m_volMax):
+								chart.m_volMax = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_volMin):
+								chart.m_volMin = shape.m_datas2[i]
+						else:
+							if (shape.m_datas2[i] > chart.m_volMaxRight):
+								chart.m_volMaxRight = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_volMinRight):
+								chart.m_volMinRight = shape.m_datas2[i]
 					elif (shape.m_divIndex == 2):
-						if (shape.m_datas2[i] > chart.m_indMax):
-							chart.m_indMax = shape.m_datas2[i]
-						if (shape.m_datas2[i] < chart.m_indMin):
-							chart.m_indMin = shape.m_datas2[i]
+						if(shape.m_leftOrRight):
+							if (shape.m_datas2[i] > chart.m_indMax):
+								chart.m_indMax = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_indMin):
+								chart.m_indMin = shape.m_datas2[i]
+						else:
+							if (shape.m_datas2[i] > chart.m_indMaxRight):
+								chart.m_indMaxRight = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_indMinRight):
+								chart.m_indMinRight = shape.m_datas2[i]
 					elif (shape.m_divIndex == 3):
-						if (shape.m_datas2[i] > chart.m_indMax2):
-							chart.m_indMax2 = shape.m_datas2[i]
-						if (shape.m_datas2[i] < chart.m_indMin2):
-							chart.m_indMin2 = shape.m_datas2[i]
+						if(shape.m_leftOrRight):
+							if (shape.m_datas2[i] > chart.m_indMax2):
+								chart.m_indMax2 = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_indMin2):
+								chart.m_indMin2 = shape.m_datas2[i]
+						else:
+							if (shape.m_datas2[i] > chart.m_indMax2Right):
+								chart.m_indMax2Right = shape.m_datas2[i]
+							if (shape.m_datas2[i] < chart.m_indMin2Right):
+								chart.m_indMin2Right = shape.m_datas2[i]
 					
 	if (isTrend):
 		subMax = max(abs(chart.m_candleMax - firstOpen), abs(chart.m_candleMin - firstOpen))
@@ -3886,6 +4016,18 @@ def calculateChartMaxMin(chart):
 		if(chart.m_indMax2 == 0 and chart.m_indMin2 == 0):
 			chart.m_indMax2 = 1
 			chart.m_indMin2 = -1
+		if(chart.m_candleMaxRight == 0 and chart.m_candleMinRight == 0):
+			chart.m_candleMaxRight = 1
+			chart.m_candleMinRight = -1
+		if(chart.m_volMaxRight == 0 and chart.m_volMinRight == 0):
+			chart.m_volMaxRight = 1
+			chart.m_volMinRight = -1
+		if(chart.m_indMaxRight == 0 and chart.m_indMinRight == 0):
+			chart.m_indMaxRight = 1
+			chart.m_indMinRight = -1
+		if(chart.m_indMax2Right == 0 and chart.m_indMin2Right == 0):
+			chart.m_indMax2Right = 1
+			chart.m_indMin2Right = -1
 
 #缩小
 #chart:K线
@@ -4155,6 +4297,61 @@ def selectLines(chart, mp, divIndex, datas, curIndex):
 				return TRUE
 	return FALSE
 
+#判断是否在右轴选中线条
+#chart:K线
+#mp:坐标
+#divIndex:层索引
+#datas:数据
+#curIndex:当前索引
+def selectLinesInRight(chart, mp, divIndex, datas, curIndex):
+	if(len(datas) > 0):
+		topY = getChartYInRight(chart, divIndex, datas[curIndex])
+		if (chart.m_hScalePixel <= 1):
+			if(mp.y >= topY - 8 and mp.y <= topY + 8):
+				return TRUE
+		else:
+			index = curIndex
+			scaleX = getChartX(chart, index)
+			judgeTop = 0
+			judgeScaleX = scaleX
+			if (mp.x >= scaleX):
+				leftIndex = curIndex + 1
+				if (curIndex < chart.m_lastVisibleIndex):
+					rightValue = datas[leftIndex]
+					judgeTop = getChartYInRight(chart, divIndex, rightValue)
+				else:
+					judgeTop = topY
+			else:
+				judgeScaleX = scaleX - chart.m_hScalePixel
+				rightIndex = curIndex - 1
+				if (curIndex > 0):
+					leftValue = datas[rightIndex]
+					judgeTop = getChartYInRight(chart, divIndex, leftValue)
+				else:
+					judgeTop = topY
+			lineWidth = 4
+			judgeX = 0
+			judgeY = 0
+			judgeW = 0
+			judgeH = 0
+			if (judgeTop >= topY):
+				judgeX = judgeScaleX
+				judgeY = topY - 2 - lineWidth
+				judgeW = chart.m_hScalePixel
+				judgeH = judgeTop - topY + 4 + lineWidth
+				if(judgeH < 4):
+					judgeH = 4
+			else:
+				judgeX = judgeScaleX
+				judgeY = judgeTop - 2 - lineWidth / 2
+				judgeW = chart.m_hScalePixel
+				judgeH = topY - judgeTop + 4 + lineWidth
+				if(judgeH < 4):
+					judgeH = 4
+			if (mp.x >= judgeX and mp.x <= judgeX + judgeW and mp.y >= judgeY and mp.y <= judgeY + judgeH):
+				return TRUE
+	return FALSE
+
 #判断是否选中图形
 #chart:K线
 #mp:坐标
@@ -4294,9 +4491,14 @@ def selectShape(chart, mp):
 		if(len(chart.m_shapes) > 0):
 			for i in range(0, len(chart.m_shapes)):
 				shape = chart.m_shapes[i]
-				if (selectLines(chart, mp, shape.m_divIndex, shape.m_datas, index)):
-					chart.m_selectShape = shape.m_name
-					break
+				if(shape.m_leftOrRight):
+					if (selectLines(chart, mp, shape.m_divIndex, shape.m_datas, index)):
+						chart.m_selectShape = shape.m_name
+						break
+				else:
+					if (selectLinesInRight(chart, mp, shape.m_divIndex, shape.m_datas, index)):
+						chart.m_selectShape = shape.m_name
+						break
 
 
 #绘制线条
@@ -4317,6 +4519,33 @@ def drawChartLines(chart, paint, clipRect, divIndex, datas, color, selected):
 		x = getChartX(chart, i)
 		value = datas[i]
 		y = getChartY(chart, divIndex, value)
+		drawPoints.append((x, y))
+		if (selected):
+			kPInterval = int(maxVisibleRecord / 30)
+			if (kPInterval < 2):
+				kPInterval = 3
+			if (i % kPInterval == 0):
+				paint.fillRect(color, x - 3, y - 3, x + 3, y + 3)
+	paint.drawPolyline(color, m_lineWidth_Chart, 0, drawPoints)
+
+#绘制线条到右轴
+#chart:K线
+#paint:绘图对象
+#clipRect:裁剪区域
+#divIndex:图层
+#datas:数据
+#color:颜色
+#selected:是否选中
+def drawChartLinesInRight(chart, paint, clipRect, divIndex, datas, color, selected):
+	maxVisibleRecord = getChartMaxVisibleCount(chart, chart.m_hScalePixel, getChartWorkAreaWidth(chart))
+	lastValidIndex = chart.m_lastVisibleIndex
+	if(chart.m_lastValidIndex != -1):
+		lastValidIndex = chart.m_lastValidIndex
+	drawPoints = []
+	for i in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
+		x = getChartX(chart, i)
+		value = datas[i]
+		y = getChartYInRight(chart, divIndex, value)
 		drawPoints.append((x, y))
 		if (selected):
 			kPInterval = int(maxVisibleRecord / 30)
@@ -6576,15 +6805,27 @@ def drawChartStock(chart, paint, clipRect):
 					if(len(shape.m_showHideDatas) > j and str(shape.m_showHideDatas[j]) == "0"):
 						continue
 					x = getChartX(chart, j)
-					y1 = getChartY(chart, shape.m_divIndex, shape.m_datas[j])
+					y1 = 0
+					if(shape.m_leftOrRight):
+						y1 = getChartY(chart, shape.m_divIndex, shape.m_datas[j])
+					else:
+						y1 = getChartYInRight(chart, shape.m_divIndex, shape.m_datas[j])
 					if(shape.m_style != "2color"):
-						y2 = getChartY(chart, shape.m_divIndex, shape.m_datas2[j])
+						y2 = 0
+						if(shape.m_leftOrRight):
+							y2 = getChartY(chart, shape.m_divIndex, shape.m_datas2[j])
+						else:
+							y2 = getChartYInRight(chart, shape.m_divIndex, shape.m_datas2[j])
 						if(y1 >= y2):
 							paint.fillRect(shape.m_color, x - cWidth, y2, x + cWidth, y1)
 						else:
 							paint.fillRect(shape.m_color, x - cWidth, y1, x + cWidth, y2)
 					else:
-						y2 = getChartY(chart, shape.m_divIndex, 0)
+						if(shape.m_leftOrRight):
+							y2 = 0
+							y2 = getChartY(chart, shape.m_divIndex, 0)
+						else:
+							y2 = getChartYInRight(chart, shape.m_divIndex, 0)
 						if(y1 >= y2):
 							paint.drawLine(shape.m_color2, 1, 0, x, y1, x, y2)
 						else:
@@ -6595,16 +6836,25 @@ def drawChartStock(chart, paint, clipRect):
 				for j in range(chart.m_firstVisibleIndex,lastValidIndex + 1):
 					x = getChartX(chart, j)
 					if(shape.m_datas[j] != 0):
-						y1 = getChartY(chart, shape.m_divIndex, shape.m_value)
+						y1 = 0
+						if(shape.m_leftOrRight):
+							y1 = getChartY(chart, shape.m_divIndex, shape.m_value)
+						else:
+							y1 = getChartYInRight(chart, shape.m_divIndex, shape.m_value)
 						drawText = shape.m_text
 						tSize = paint.textSize(drawText, "14px Arial")
 						paint.drawText(drawText, shape.m_color, "14px Arial", x - tSize.cx / 2, y1 - tSize.cy / 2)
 			else:
-				if(chart.m_selectShape == shape.m_name):
-					drawChartLines(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, TRUE)
+				if(shape.m_leftOrRight):
+					if(chart.m_selectShape == shape.m_name):
+						drawChartLines(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, TRUE)
+					else:
+						drawChartLines(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, FALSE)
 				else:
-					drawChartLines(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, FALSE)
-
+					if(chart.m_selectShape == shape.m_name):
+						drawChartLinesInRight(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, TRUE)
+					else:
+						drawChartLinesInRight(chart, paint, clipRect, shape.m_divIndex, shape.m_datas, shape.m_color, FALSE)
 
 m_paintChartScale = None #绘制坐标轴回调
 m_paintChartStock = None #绘制K线回调
