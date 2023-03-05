@@ -6011,7 +6011,8 @@ def drawChartScale(chart, paint, clipRect):
 				paint.fillRect(chart.m_gridColor, chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 				paint.fillRect(chart.m_scaleColor, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 				paint.fillRect(chart.m_scaleColor, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY) + m_lineWidth_Chart)
-				tSize = paint.textSize(toFixed(start, chart.m_candleDigit), chart.m_font)
+				drawText = toFixed(start, chart.m_candleDigit)
+				tSize = paint.textSize(drawText, chart.m_font)
 				if(isTrend):
 					diffRange = ((start - firstOpen) / firstOpen * 100)
 					diffRangeStr = toFixed(diffRange, 2) + "%"
@@ -6020,8 +6021,8 @@ def drawChartScale(chart, paint, clipRect):
 					else:
 						paint.drawText(diffRangeStr, chart.m_downColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
 				else:
-					paint.drawText(toFixed(start, chart.m_candleDigit), chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
-				paint.drawText(toFixed(start, chart.m_candleDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
+					paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
+				paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)			
 		topPoint = FCPoint(0, candleDivHeight + 10)
 		bottomPoint = FCPoint(0, candleDivHeight + volDivHeight - 10)
 		volMax = getChartValue(chart, topPoint)
@@ -6043,9 +6044,10 @@ def drawChartScale(chart, paint, clipRect):
 					paint.fillRect(chart.m_gridColor, chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 					paint.fillRect(chart.m_scaleColor, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 					paint.fillRect(chart.m_scaleColor, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY) + m_lineWidth_Chart)
-					tSize = paint.textSize(toFixed((start/chart.m_magnitude), chart.m_volDigit), chart.m_font)
-					paint.drawText(toFixed((start/chart.m_magnitude), chart.m_volDigit), chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
-					paint.drawText(toFixed((start/chart.m_magnitude), chart.m_volDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
+					drawText = toFixed((start/chart.m_magnitude), chart.m_volDigit)
+					tSize = paint.textSize(drawText, chart.m_font)
+					paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
+					paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
 				start += m_gridStep_Chart
 		if(indDivHeight > 0):
 			topPoint = FCPoint(0, candleDivHeight + volDivHeight + 10)
@@ -6069,9 +6071,10 @@ def drawChartScale(chart, paint, clipRect):
 						paint.fillRect(chart.m_gridColor, chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 						paint.fillRect(chart.m_scaleColor, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 						paint.fillRect(chart.m_scaleColor, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY) + m_lineWidth_Chart)
-						tSize = paint.textSize(toFixed(start, chart.m_indDigit), chart.m_font)
-						paint.drawText(toFixed(start, chart.m_indDigit), chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
-						paint.drawText(toFixed(start, chart.m_indDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
+						drawText = toFixed(start, chart.m_indDigit)
+						tSize = paint.textSize(drawText, chart.m_font)
+						paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
+						paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
 					start += m_gridStep_Chart
 		if(indDivHeight2 > 0):
 			topPoint = FCPoint(0, candleDivHeight + volDivHeight + indDivHeight + 10)
@@ -6095,9 +6098,10 @@ def drawChartScale(chart, paint, clipRect):
 						paint.fillRect(chart.m_gridColor, chart.m_leftVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 						paint.fillRect(chart.m_scaleColor, chart.m_leftVScaleWidth - 8, int(hAxisY), chart.m_leftVScaleWidth, int(hAxisY) + m_lineWidth_Chart)
 						paint.fillRect(chart.m_scaleColor, chart.m_size.cx - chart.m_rightVScaleWidth, int(hAxisY), chart.m_size.cx - chart.m_rightVScaleWidth + 8, int(hAxisY) + m_lineWidth_Chart)
-						tSize = paint.textSize(toFixed(start, chart.m_indDigit), chart.m_font)
-						paint.drawText(toFixed(start, chart.m_indDigit), chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
-						paint.drawText(toFixed(start, chart.m_indDigit), chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
+						drawText = toFixed(start, chart.m_indDigit)
+						tSize = paint.textSize(drawText, chart.m_font)
+						paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_size.cx - chart.m_rightVScaleWidth + 10, int(hAxisY) - tSize.cy / 2)
+						paint.drawText(drawText, chart.m_textColor, chart.m_font, chart.m_leftVScaleWidth - tSize.cx - 10, int(hAxisY) - tSize.cy / 2)
 					start += m_gridStep_Chart
 		if(chart.m_data != None and len(chart.m_data) > 0 and chart.m_hScaleHeight > 0):
 			dLeft = chart.m_leftVScaleWidth + 10
@@ -6126,7 +6130,7 @@ def drawChartScale(chart, paint, clipRect):
 				dx = x - tSize.cx / 2
 				if(dx > dLeft and dx < chart.m_size.cx - chart.m_rightVScaleWidth - 10):
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, x, chart.m_size.cy - chart.m_hScaleHeight, x, chart.m_size.cy - chart.m_hScaleHeight + 8)
-					paint.drawText(xText, chart.m_textColor, chart.m_font, dx, chart.m_size.cy - chart.m_hScaleHeight + 8  - tSize.cy / 2)
+					paint.drawText(xText, chart.m_textColor, chart.m_font, dx, chart.m_size.cy - chart.m_hScaleHeight + 8  - tSize.cy / 2 + 7)
 					i = i + int((tSize.cx + 10) / chart.m_hScalePixel) + 1
 				else:
 					i = i + 1
