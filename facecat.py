@@ -6704,7 +6704,7 @@ def drawChartStock(chart, paint, clipRect):
 					if (macdY < zeroY):
 						paint.fillRect(m_indicatorColors[3], x, macdY, x + m_lineWidth_Chart, zeroY)
 					else:
-						paint.fillRect(m_indicatorColors[4], x, macdY, x + m_lineWidth_Chart, zeroY)
+						paint.fillRect(m_indicatorColors[4], x, zeroY, x + m_lineWidth_Chart, macdY)
 					if (chart.m_selectShape == chart.m_showIndicator and chart.m_selectShapeEx == "MACD"):
 						kPInterval = int(maxVisibleRecord / 30)
 						if (kPInterval < 2):
