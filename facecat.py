@@ -6127,8 +6127,7 @@ def drawChartScale(chart, paint, clipRect):
 				if(dx > dLeft and dx < chart.m_size.cx - chart.m_rightVScaleWidth - 10):
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, x, chart.m_size.cy - chart.m_hScaleHeight, x, chart.m_size.cy - chart.m_hScaleHeight + 8)
 					paint.drawText(xText, chart.m_textColor, chart.m_font, dx, chart.m_size.cy - chart.m_hScaleHeight + 8  - tSize.cy / 2)
-					dLeft = x + tSize.cx
-					i = i + int(tSize.cx / chart.m_hScalePixel) + 1
+					i = i + int((tSize.cx + 10) / chart.m_hScalePixel) + 1
 				else:
 					i = i + 1
 
