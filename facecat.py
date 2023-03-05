@@ -9,6 +9,7 @@ import win32api
 from win32con import *
 import math
 import time
+import datetime
 from operator import attrgetter
 from ctypes import *
 import os
@@ -6100,7 +6101,8 @@ def drawChartScale(chart, paint, clipRect):
 					start += m_gridStep_Chart
 		if(chart.m_data != None and len(chart.m_data) > 0 and chart.m_hScaleHeight > 0):
 			dLeft = chart.m_leftVScaleWidth + 10
-			for i in range(chart.m_firstVisibleIndex,chart.m_lastVisibleIndex + 1):
+			i = chart.m_firstVisibleIndex
+			while(i <= chart.m_lastVisibleIndex):
 				xText = ""
 				if (chart.m_cycle == "day"):
 					timeArray = time.localtime(chart.m_data[i].m_date)
@@ -6126,6 +6128,9 @@ def drawChartScale(chart, paint, clipRect):
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, x, chart.m_size.cy - chart.m_hScaleHeight, x, chart.m_size.cy - chart.m_hScaleHeight + 8)
 					paint.drawText(xText, chart.m_textColor, chart.m_font, dx, chart.m_size.cy - chart.m_hScaleHeight + 8  - tSize.cy / 2)
 					dLeft = x + tSize.cx
+					i = i + int(tSize.cx / chart.m_hScalePixel) + 1
+				else:
+					i = i + 1
 
 #绘制十字线
 #chart:K线
@@ -6873,10 +6878,13 @@ def drawChart(chart, paint, clipRect):
 	global m_paintChartCrossLine
 	if (chart.m_backColor != "none"):
 		paint.fillRect(chart.m_backColor, 0, 0, chart.m_size.cx, chart.m_size.cy)
+	tick1 = time.time()
 	if(m_paintChartScale != None):
 		m_paintChartScale(chart, paint, clipRect)
 	else:
 		drawChartScale(chart, paint, clipRect)
+	tick2 = time.time()
+	#print(tick2 - tick1)
 	if(m_paintChartStock != None):
 		m_paintChartStock(chart, paint, clipRect)
 	else:
