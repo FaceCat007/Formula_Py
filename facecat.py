@@ -101,7 +101,7 @@ class FCPaint(object):
 				self.m_gdiPlusPaint.init()
 				self.m_gdiPlusPaint.createGdiPlus(self.m_hWnd)
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.beginPaint(self.m_hdc, int(rect.left), int(rect.top), int(rect.right), int(rect.bottom), int(pRect.left), int(pRect.top), int(pRect.right), int(pRect.bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.beginPaintGdiPlus(self.m_gdiPlusPaint.m_gID, self.m_hdc, c_int(int(rect.left)), c_int(int(rect.top)), c_int(int(rect.right)), c_int(int(rect.bottom)), c_int(int(pRect.left)), c_int(int(pRect.top)), c_int(int(pRect.right)), c_int(int(pRect.bottom)))
 		else:
 			self.m_drawHDC = win32gui.CreateCompatibleDC(self.m_hdc)
 			win32gui.SetBkMode(self.m_drawHDC, TRANSPARENT)
@@ -129,7 +129,7 @@ class FCPaint(object):
 			inStyle = 0
 			if(style != 0):
 				inStyle = 2
-			self.m_gdiPlusPaint.drawLine(toColor(color), int(wd), inStyle, int(x1), int(y1), int(x2), int(y2))
+			self.m_gdiPlusPaint.m_gdiPlus.drawLineGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_float(int(wd)), c_int(inStyle), c_int(int(x1)), c_int(int(y1)), c_int(int(x2)), c_int(int(y2)))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -160,7 +160,7 @@ class FCPaint(object):
 				inStyle = 0
 				if(style != 0):
 					inStyle = 2
-				self.m_gdiPlusPaint.drawPolyline(toColor(color), int(wd), inStyle, strApt)
+				self.m_gdiPlusPaint.m_gdiPlus.drawPolylineGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_float(int(wd)), c_int(inStyle), c_char_p(strApt.encode(self.m_gdiPlusPaint.m_encoding)))
 			else:
 				hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 				hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -198,7 +198,7 @@ class FCPaint(object):
 				inStyle = 0
 				if(style != 0):
 					inStyle = 2
-				self.m_gdiPlusPaint.drawPolygon(toColor(color), int(wd), inStyle, strApt)
+				self.m_gdiPlusPaint.m_gdiPlus.drawPolygonGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_float(int(wd)), c_int(inStyle), c_char_p(strApt.encode(self.m_gdiPlusPaint.m_encoding)))
 			else:
 				hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 				hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -234,7 +234,7 @@ class FCPaint(object):
 			inStyle = 0
 			if(style != 0):
 				inStyle = 2
-			self.m_gdiPlusPaint.drawRect(toColor(color), int(wd), inStyle, int(left), int(top), int(right), int(bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.drawRectGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_float(int(wd)), c_int(inStyle), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -262,7 +262,7 @@ class FCPaint(object):
 			inStyle = 0
 			if(style != 0):
 				inStyle = 2
-			self.m_gdiPlusPaint.drawEllipse(toColor(color), int(wd), inStyle, int(left), int(top), int(right), int(bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.drawEllipseGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_float(int(wd)), c_int(inStyle), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)))
 		else:
 			hPen = win32gui.CreatePen(PS_SOLID, int(wd), toColor(color)) 
 			hOldPen = win32gui.SelectObject(self.m_innerHDC, hPen)
@@ -290,7 +290,7 @@ class FCPaint(object):
 	def drawText(self, text, color, font, x, y):
 		if(self.m_gdiPlusPaint != None):
 			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
-			self.m_gdiPlusPaint.drawTextWithPos(text, toColor(color), newFont, int(x), int(y))
+			self.m_gdiPlusPaint.m_gdiPlus.drawTextWithPosGdiPlus(self.m_gdiPlusPaint.m_gID, c_char_p(text.encode(self.m_gdiPlusPaint.m_encoding)), toColor(color), c_char_p(newFont.encode(self.m_gdiPlusPaint.m_encoding)), c_int(int(x)), c_int(int(y)))
 		else:
 			fontSize = float(font.split(" ")[0].replace("px", "")) + 7
 			if(fontSize != self.m_textSize):
@@ -312,7 +312,7 @@ class FCPaint(object):
 	#结束绘图
 	def endPaint(self):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.endPaint()
+			self.m_gdiPlusPaint.m_gdiPlus.endPaintGdiPlus(self.m_gdiPlusPaint.m_gID)
 		else:
 			if(self.m_clipRect != None):
 				win32gui.BitBlt(self.m_hdc, int(self.m_clipRect.left), int(self.m_clipRect.top), int(self.m_clipRect.right - self.m_clipRect.left), int(self.m_clipRect.bottom - self.m_clipRect.top), self.m_drawHDC, int(self.m_clipRect.left), int(self.m_clipRect.top), SRCCOPY)
@@ -332,7 +332,7 @@ class FCPaint(object):
 	#bottom:下方坐标
 	def fillRect(self, color, left, top, right, bottom):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.fillRect(toColor(color), int(left), int(top), int(right), int(bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.fillRectGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)))
 		else:
 			brush = win32gui.CreateSolidBrush(toColor(color))
 			win32gui.SelectObject(self.m_innerHDC, brush)
@@ -354,7 +354,7 @@ class FCPaint(object):
 					strApt += str(x) + "," + str(y)
 					if(i != len(apt) - 1):
 						strApt += " "
-				self.m_gdiPlusPaint.fillPolygon(toColor(color), strApt)
+				self.m_gdiPlusPaint.m_gdiPlus.fillPolygonGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_char_p(strApt.encode(self.m_gdiPlusPaint.m_encoding)))
 			else:
 				brush = win32gui.CreateSolidBrush(toColor(color))
 				win32gui.SelectObject(self.m_innerHDC, brush)
@@ -376,7 +376,7 @@ class FCPaint(object):
 	#bottom:下方坐标
 	def fillEllipse(self, color, left, top, right, bottom):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.fillEllipse(toColor(color), int(left), int(top), int(right), int(bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.fillEllipseGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)))
 		else:
 			brush = win32gui.CreateSolidBrush(toColor(color))
 			win32gui.SelectObject(self.m_innerHDC, brush)
@@ -393,7 +393,7 @@ class FCPaint(object):
 	#sweepAngle:持续角度
 	def fillPie(self, color, left, top, right, bottom, startAngle, sweepAngle):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.fillPie(toColor(color), int(left), int(top), int(right), int(bottom), startAngle, sweepAngle)
+			self.m_gdiPlusPaint.m_gdiPlus.fillPieGdiPlus(self.m_gdiPlusPaint.m_gID, toColor(color), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)), c_float(startAngle), c_float(sweepAngle))
 		else:
 			brush = win32gui.CreateSolidBrush(toColor(color))
 			win32gui.SelectObject(self.m_innerHDC, brush)
@@ -412,7 +412,7 @@ class FCPaint(object):
 	#offsetY:纵向偏移
 	def setOffset(self, offsetX, offsetY):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.setOffset(int(offsetX), int(offsetY))
+			self.m_gdiPlusPaint.m_gdiPlus.setOffsetGdiPlus(self.m_gdiPlusPaint.m_gID, c_int(int(offsetX)), c_int(int(offsetY)))
 		else:
 			self.m_offsetX = offsetX
 			self.m_offsetY = offsetY
@@ -423,7 +423,7 @@ class FCPaint(object):
 		if(self.m_gdiPlusPaint != None):
 			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
 			recvData = create_string_buffer(1024)
-			self.m_gdiPlusPaint.textSize(text, newFont, -1, recvData)
+			self.m_gdiPlusPaint.m_gdiPlus.textSizeGdiPlus(self.m_gdiPlusPaint.m_gID, c_char_p(text.encode(self.m_gdiPlusPaint.m_encoding)), c_char_p(newFont.encode(self.m_gdiPlusPaint.m_encoding)), c_int(-1), recvData)
 			sizeStr = str(recvData.value, encoding=self.m_gdiPlusPaint.m_encoding)
 			return FCSize(int(sizeStr.split(",")[0]),int(sizeStr.split(",")[1]))
 		else:
@@ -453,7 +453,7 @@ class FCPaint(object):
 	def drawTextAutoEllipsis(self, text, color, font, left, top, right, bottom):
 		if(self.m_gdiPlusPaint != None):
 			newFont = self.m_systemFont + "," + font.split(" ")[0].replace("px", "")
-			self.m_gdiPlusPaint.drawTextAutoEllipsis(text, toColor(color), newFont, int(left), int(top), int(right), int(bottom))
+			self.m_gdiPlusPaint.m_gdiPlus.drawTextAutoEllipsisGdiPlus(self.m_gdiPlusPaint.m_gID, c_char_p(text.encode(self.m_gdiPlusPaint.m_encoding)), toColor(color), c_char_p(newFont.encode(self.m_gdiPlusPaint.m_encoding)), c_int(int(left)), c_int(int(top)), c_int(int(right)), c_int(int(bottom)))
 		else:
 			fontSize = float(font.split(" ")[0].replace("px", "")) + 7
 			if(fontSize != self.m_textSize):
@@ -476,7 +476,7 @@ class FCPaint(object):
 	#rect:区域
 	def setClip(self, rect):
 		if(self.m_gdiPlusPaint != None):
-			self.m_gdiPlusPaint.setClip(int(rect.left), int(rect.top), int(rect.right), int(rect.bottom))
+			return self.m_gdiPlusPaint.m_gdiPlus.setClipGdiPlus(self.m_gdiPlusPaint.m_gID, c_int(int(rect.left)), c_int(int(rect.top)), c_int(int(rect.right)), c_int(int(rect.bottom)))
 	#开始裁剪
 	#rect:区域
 	def beginClip(self, rect):
@@ -6906,6 +6906,7 @@ def drawChart(chart, paint, clipRect):
 		drawChartCrossLine(chart, paint, clipRect)
 	tick6 = time.time()
 	#print("fps3:" + str(tick6 - tick5))
+	#print("fps:" + str(tick6 - tick1))
 	if (chart.m_borderColor != "none"):
 		paint.drawRect(chart.m_borderColor, m_lineWidth_Chart, 0, 0, 0, chart.m_size.cx, chart.m_size.cy)
 
