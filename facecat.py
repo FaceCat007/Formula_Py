@@ -1293,6 +1293,7 @@ class FCChart(FCView):
 		self.m_ma250 = []
 		self.m_shapes = [] #扩展图形
 		self.m_hScaleFormat = "" #X轴的格式化字符，例如%Y-%m-%d %H:%M:%S
+		self.m_hScaleTextDistance = 10 #X轴的文字间隔
 	pass
 
 m_indicatorColors = [] #指标的颜色
@@ -6108,30 +6109,31 @@ def drawChartScale(chart, paint, clipRect):
 			i = chart.m_firstVisibleIndex
 			while(i <= chart.m_lastVisibleIndex):
 				xText = ""
-				if (chart.m_cycle == "day"):
-					timeArray = time.localtime(chart.m_data[i].m_date)
-					xText = time.strftime("%Y-%m-%d", timeArray)
-				elif(chart.m_cycle == "minute"):
-					timeArray = time.localtime(chart.m_data[i].m_date)
-					xText = time.strftime("%Y-%m-%d %H:%M", timeArray)
-				elif(chart.m_cycle == "trend"):
-					timeArray = time.localtime(chart.m_data[i].m_date)
-					xText = time.strftime("%H:%M", timeArray)
-				elif(chart.m_cycle == "second"):
-					timeArray = time.localtime(chart.m_data[i].m_date)
-					xText = time.strftime("%H:%M:%S", timeArray)
-				elif(chart.m_cycle == "tick"):
-					xText = str(i + 1)
 				if (len(chart.m_hScaleFormat) > 0):
 					timeArray = time.localtime(chart.m_data[i].m_date)
 					xText = time.strftime(chart.m_hScaleFormat, timeArray)
+				else:
+					if (chart.m_cycle == "day"):
+						timeArray = time.localtime(chart.m_data[i].m_date)
+						xText = time.strftime("%Y-%m-%d", timeArray)
+					elif(chart.m_cycle == "minute"):
+						timeArray = time.localtime(chart.m_data[i].m_date)
+						xText = time.strftime("%Y-%m-%d %H:%M", timeArray)
+					elif(chart.m_cycle == "trend"):
+						timeArray = time.localtime(chart.m_data[i].m_date)
+						xText = time.strftime("%H:%M", timeArray)
+					elif(chart.m_cycle == "second"):
+						timeArray = time.localtime(chart.m_data[i].m_date)
+						xText = time.strftime("%H:%M:%S", timeArray)
+					elif(chart.m_cycle == "tick"):
+						xText = str(i + 1)
 				tSize = paint.textSize(xText, chart.m_font)
 				x = getChartX(chart, i)
 				dx = x - tSize.cx / 2
 				if(dx > dLeft and dx < chart.m_size.cx - chart.m_rightVScaleWidth - 10):
 					paint.drawLine(chart.m_scaleColor, m_lineWidth_Chart, 0, x, chart.m_size.cy - chart.m_hScaleHeight, x, chart.m_size.cy - chart.m_hScaleHeight + 8)
 					paint.drawText(xText, chart.m_textColor, chart.m_font, dx, chart.m_size.cy - chart.m_hScaleHeight + 8  - tSize.cy / 2 + 7)
-					i = i + int((tSize.cx + 10) / chart.m_hScalePixel) + 1
+					i = i + int((tSize.cx + chart.m_hScaleTextDistance) / chart.m_hScalePixel) + 1
 				else:
 					i = i + 1
 
@@ -6152,8 +6154,12 @@ def drawChartCrossLine(chart, paint, clipRect):
 	if(volDivHeight > 0):
 		drawTitles = []
 		drawColors = []
-		drawTitles.append("VOL " + toFixed(chart.m_data[crossLineIndex].m_volume, chart.m_volDigit))
-		drawColors.append(chart.m_textColor)
+		if(len(chart.m_data) > 0):
+			drawTitles.append("VOL " + toFixed(chart.m_data[crossLineIndex].m_volume, chart.m_volDigit))
+			drawColors.append(chart.m_textColor)
+		else:
+			drawTitles.append("VOL")
+			drawColors.append(chart.m_textColor)
 		if(len(chart.m_shapes) > 0):
 			for i in range(0, len(chart.m_shapes)):
 				shape = chart.m_shapes[i]
@@ -6179,8 +6185,12 @@ def drawChartCrossLine(chart, paint, clipRect):
 	if (chart.m_cycle == "trend"):
 		drawTitles = []
 		drawColors = []
-		drawTitles.append("CLOSE" + toFixed(chart.m_data[crossLineIndex].m_close, chart.m_candleDigit))
-		drawColors.append(chart.m_textColor)
+		if(len(chart.m_data) > 0):
+			drawTitles.append("CLOSE" + toFixed(chart.m_data[crossLineIndex].m_close, chart.m_candleDigit))
+			drawColors.append(chart.m_textColor)
+		else:
+			drawTitles.append("CLOSE")
+			drawColors.append(chart.m_textColor)
 		iLeft = chart.m_leftVScaleWidth + 5
 		if(len(chart.m_shapes) > 0):
 			for i in range(0, len(chart.m_shapes)):
