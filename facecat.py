@@ -1041,6 +1041,11 @@ class FCGridColumn(object):
 		self.m_index = -1 #索引
 		self.m_bounds = FCRect(0,0,0,0) #区域
 		self.m_allowSort = TRUE #是否允许排序
+		self.m_allowResize = FALSE #是否允许改变大小
+
+m_resizeColumnState = 0 #改变列宽度的状态
+m_resizeColumnBeginWidth = 0 #改变列宽度的起始值
+m_resizeColumnIndex = -1 #改变列宽度的索引
 
 #表格列
 class FCGridCell(object):	
@@ -2348,6 +2353,15 @@ def drawGridScrollBar(grid, paint, clipRect):
 #firstPoint:第一次触摸的坐标 
 #secondPoint:第二次触摸的坐标
 def mouseMoveGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
+	global m_resizeColumnState
+	global m_resizeColumnBeginWidth
+	global m_resizeColumnIndex
+	if (m_resizeColumnState != 0):
+		gridColumn = grid.m_columns[m_resizeColumnIndex]
+		newWidth = m_resizeColumnBeginWidth + (firstPoint.x - grid.m_startPoint.x)
+		if (newWidth > 10):
+			gridColumn.m_width = newWidth
+		return
 	if (firstTouch):
 		mp = firstPoint;
 		if (grid.m_showHScrollBar or grid.m_showVScrollBar):
@@ -2438,6 +2452,33 @@ def mouseDownGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 	if (grid.m_allowDragScroll):
 		grid.m_startScrollH = grid.m_scrollH
 		grid.m_startScrollV = grid.m_scrollV
+	colLeft = 0
+	#重置列
+	for i in range(0, len(grid.m_columns)):
+		column = grid.m_columns[i]
+		colRect = FCRect(colLeft, 0, colLeft + grid.m_columns[i].m_width, grid.m_headerHeight)
+		column.m_bounds = colRect
+		column.m_index = i
+		colLeft += column.m_width
+	global m_resizeColumnState
+	global m_resizeColumnBeginWidth
+	global m_resizeColumnIndex
+	m_resizeColumnState = 0
+	m_resizeColumnBeginWidth = 0
+	if (grid.m_headerHeight > 0 and mp.y <= grid.m_headerHeight):
+		for gridColumn in grid.m_columns:
+			if (gridColumn.m_visible):
+				bounds = gridColumn.m_bounds
+				if (mp.x >= bounds.left and mp.x <= bounds.right):
+					if (gridColumn.m_index > 0 and mp.x < bounds.left + 5):
+						m_resizeColumnState = 1
+						m_resizeColumnBeginWidth = grid.m_columns[gridColumn.m_index - 1].m_bounds.right - grid.m_columns[gridColumn.m_index - 1].m_bounds.left
+						m_resizeColumnIndex = gridColumn.m_index - 1
+					elif (mp.x > bounds.right - 5):
+						m_resizeColumnState = 2
+						m_resizeColumnBeginWidth = bounds.right - bounds.left
+						m_resizeColumnIndex = gridColumn.m_index
+					break
 
 #表格的鼠标抬起方法 
 #grid: 表格 
@@ -2448,6 +2489,10 @@ def mouseDownGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 def mouseUpGrid(grid, firstTouch, secondTouch, firstPoint, secondPoint):
 	grid.m_downScrollHButton = FALSE
 	grid.m_downScrollVButton = FALSE
+	global m_resizeColumnState
+	if(m_resizeColumnState != 0):
+		m_resizeColumnState = 0
+		return
 	if(m_cancelClick):
 	    return
 	cLeft = -grid.m_scrollH
